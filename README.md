@@ -19,20 +19,31 @@ Windows 10/11용 규칙 기반 한국어 개인 비서. 고양이 캐릭터. LLM
 
 1. **64비트 Python 3.12 또는 3.13** 설치 (pycaw는 3.10 이상 필요, kiwipiepy Windows 휠은 x86-64용만 있음).
    - `python`을 치면 Microsoft Store가 뜨면: 설정 → 앱 → 앱 실행 별칭에서 python 끄거나 `py -3.12` 사용.
-2. 가상환경 만들고 설치:
+2. **프로젝트 폴더(`pyproject.toml`이 있는 곳)에서** 가상환경 만들고 설치:
    ```powershell
+   cd C:\경로\Jonnyang_agent
    py -3.12 -m venv .venv
-   .venv\Scripts\python.exe -m pip install -e .[dev]
+   Test-Path .\.venv\Scripts\python.exe    # True가 나와야 다음 단계로
+   .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
    ```
    - kiwipiepy 모델(약 105MB)이 같이 받아진다. 느려도 정상이다.
-   - PowerShell에서 `Activate.ps1`이 막히면 활성화 없이 위처럼 `.venv\Scripts\python.exe`를 직접 쓰면 된다.
+   - 활성화(`Activate.ps1`) 없이 `.\.venv\Scripts\python.exe`를 직접 쓰면 실행 정책 문제도 피한다.
 3. 실행:
    ```powershell
    $env:PYTHONUTF8 = "1"
-   .venv\Scripts\python.exe -m jonnyang
+   .\.venv\Scripts\python.exe -m jonnyang
    ```
    - 이모지가 네모로 나오면 Windows Terminal을 쓰거나 "이모지 꺼"라고 말하면 된다.
    - 종료: `종료`. 디버그: `/nlu 문장`(형태소·점수), `/time 문장`(시간 해석).
+
+### 설치가 안 될 때
+
+| 증상 | 원인 / 해결 |
+|---|---|
+| `'.venv' 모듈을 로드할 수 없습니다` (CouldNotAutoLoadModule) | `.venv\Scripts\python.exe` 파일이 없어서 PowerShell이 `.venv`를 모듈 이름으로 읽은 것. 가상환경이 안 만들어졌거나 다른 폴더에 있다. `Test-Path .\.venv\Scripts\python.exe`로 확인하고, False면 2단계 `py -3.12 -m venv .venv`부터 다시. |
+| `py`를 찾을 수 없음 | python.org 설치 프로그램으로 다시 설치하면서 "py launcher" 체크. 또는 `python -m venv .venv` (단 `python --version`이 3.10 이상 64비트여야 함). |
+| `No suitable Python runtime found` | `py --list`로 설치된 버전 확인. 3.12가 없으면 있는 버전(3.10 이상)으로 `py -3.13 -m venv .venv`처럼 바꾼다. |
+| `python`이 Microsoft Store를 염 | 설정 → 앱 → 고급 앱 설정 → 앱 실행 별칭에서 python 끄기. |
 
 WSL에서는 볼륨 조절(pycaw)이 안 된다. 개발은 아무 OS에서 해도 되고, 테스트는 가짜 OS 어댑터로 돈다.
 
@@ -70,9 +81,9 @@ WSL에서는 볼륨 조절(pycaw)이 안 된다. 개발은 아무 OS에서 해�
 ## 테스트
 
 ```powershell
-.venv\Scripts\python.exe -m pytest            # 전체 (Windows 전용 3개는 다른 OS에서 skip)
-.venv\Scripts\python.exe -m pytest -m windows # 실제 볼륨 읽기·시스템 정보·한글 경로 kiwi 로딩 (읽기만 함)
-.venv\Scripts\python.exe tools\eval_nlu.py --sweep   # 의도 정확도 리포트 + 임계값 스윕
+.\.venv\Scripts\python.exe -m pytest            # 전체 (Windows 전용 3개는 다른 OS에서 skip)
+.\.venv\Scripts\python.exe -m pytest -m windows # 실제 볼륨 읽기·시스템 정보·한글 경로 kiwi 로딩 (읽기만 함)
+.\.venv\Scripts\python.exe tools\eval_nlu.py --sweep   # 의도 정확도 리포트 + 임계값 스윕
 ```
 
 새 기능은 `tests/data/intents/*.yaml`에 명령 예시(정상, 오타, 어미 변형, 부정문)부터 추가한다. 실사용에서 잘못 알아들은 문장도 여기에 넣는다.
