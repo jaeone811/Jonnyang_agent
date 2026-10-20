@@ -173,6 +173,7 @@ def parse(text: str, now: datetime, default_hour: int = 9) -> TimeResult:
     explicit_today = False
     strict_past = False   # 지났으면 넘기지 말고 에러
     weekday_floating = False
+    weekend_floating: date | None = None   # "주말"이 지났을 때 넘어갈 다음 토요일
     try:
         if day_words:
             target = today + timedelta(days=day_words[0])
@@ -199,6 +200,8 @@ def parse(text: str, now: datetime, default_hour: int = 9) -> TimeResult:
             target = today if today.weekday() == 6 and not prefix else sat
             if target < today:
                 target = sat + timedelta(days=7)
+            if not prefix:
+                weekend_floating = sat + timedelta(days=7) if today.weekday() >= 5 else sat
         elif full_dates:
             m = full_dates[0]
             year = int(m.group(1)) if m.group(1) else today.year
@@ -298,6 +301,8 @@ def parse(text: str, now: datetime, default_hour: int = 9) -> TimeResult:
     if at <= now:
         if weekday_floating:
             at += timedelta(days=7)
+        elif weekend_floating is not None:
+            at = datetime.combine(weekend_floating, tod) + timedelta(days=next_day_shift)
         elif explicit_today:
             res.error = ERR_PAST_TODAY
         else:

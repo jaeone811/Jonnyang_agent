@@ -112,7 +112,8 @@ class ListSkill(Skill):
             names = [r["item"] for r in rows]
             removed, missing = [], []
             for w in wanted:
-                hit = process.extractOne(jamo(w), [jamo(n) for n in names], scorer=fuzz.ratio, score_cutoff=85)
+                # 오타 허용("게란" → 계란). 실제로 지운 항목 이름을 응답에 보여주고 undo도 된다.
+                hit = process.extractOne(jamo(w), [jamo(n) for n in names], scorer=fuzz.ratio, score_cutoff=80)
                 if hit is None:
                     missing.append(w)
                     continue

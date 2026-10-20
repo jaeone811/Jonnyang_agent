@@ -26,6 +26,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
 markers = ["windows: Windows에서만 도는 실제 시스템 스모크 테스트"]
 
 [tool.ruff]

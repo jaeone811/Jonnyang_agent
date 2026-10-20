@@ -26,6 +26,10 @@ class Console:
             out.extend(" " * len(self.speaker) + p for p in parts[1:])
         return "\n".join(out)
 
+    def raw(self, text: str) -> None:
+        with self.lock:
+            print(text, flush=True)
+
     def say(self, lines: list[str]) -> None:
         if not lines:
             return

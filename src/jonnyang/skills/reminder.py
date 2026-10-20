@@ -38,6 +38,16 @@ def extract_message(text: str, spans: list[tuple[int, int]]) -> str:
     return msg.strip(" ,.")
 
 
+TELL_ME_RE = re.compile(r"(?:으)?라고\s*(?:좀\s*)?해\s*(?:줘|주세요|줄래)")
+
+
+def _reminder_hint(req) -> float:
+    score = 0.0 if req.has_slot("at") else -0.2
+    if "TELL" not in req.groups and TELL_ME_RE.search(req.text):   # "쓰레기 버리라고 해줘"
+        score += 0.4
+    return score
+
+
 class _Scheduled(Skill):
     """reminders 테이블을 kind별로 다루는 공통 부분."""
 
@@ -110,8 +120,8 @@ class _Scheduled(Skill):
         if not rows:
             return Result(f"{self.kind}.none")
         target = None
-        if "no" in slots and 1 <= slots["no"] <= len(rows):
-            target = rows[slots["no"] - 1]
+        if "index" in slots and 1 <= slots["index"] <= len(rows):
+            target = rows[slots["index"] - 1]
         elif req.time.at is not None:
             same = [r for r in rows if datetime.fromisoformat(r["at"]) == req.time.at]
             target = same[0] if len(same) == 1 else None
@@ -168,7 +178,7 @@ class _Scheduled(Skill):
             slots["at"] = req.time.at
         m = NO_RE.search(req.text)
         if m:
-            slots["no"] = int(m.group(1))
+            slots["index"] = int(m.group(1))
         return slots
 
 
@@ -177,17 +187,18 @@ class ReminderSkill(_Scheduled):
     kind = "reminder"
     intents = [
         Intent("reminder.set", nouns={"리마인더": 0.6, "리마인드": 0.6, "알림": 0.5},
-               verbs={"TELL": 0.4, "SET": 0.3, "ADD": 0.3}, slots={"at": 0.4},
+               verbs={"TELL": 0.4, "SET": 0.3, "ADD": 0.3}, slots={"at": 0.35},
                extras={"잊": 0.1}, avoid={"CANCEL": 0.5, "SHOW": 0.4, "ALL": 0.3},
-               hint=lambda req: 0.0 if req.has_slot("at") else -0.2, required=("at",),
+               hint=_reminder_hint, required=("at",),
                examples=("내일 오후 3시에 병원 가라고 알려줘", "10분 뒤에 빨래 꺼내라고 알려줘")),
         Intent("reminder.list", nouns={"리마인더": 0.7, "리마인드": 0.7, "알림": 0.6, "일정": 0.5},
-               verbs={"SHOW": 0.3, "TELL": 0.3}, avoid={"CANCEL": 0.5, "SET": 0.3, "ADD": 0.3},
-               examples=("리마인더 뭐 있어",)),
+               verbs={"SHOW": 0.4, "TELL": 0.3}, extras={"목록": 0.3, "리스트": 0.3},
+               avoid={"CANCEL": 0.5, "SET": 0.3, "ADD": 0.3}, examples=("리마인더 뭐 있어",)),
         Intent("reminder.cancel", nouns={"리마인더": 0.7, "리마인드": 0.7, "알림": 0.6},
-               verbs={"CANCEL": 0.3}, avoid={"ALL": 0.4}, examples=("병원 리마인더 취소",)),
+               verbs={"CANCEL": 0.3}, avoid={"ALL": 0.4, "SET": 0.4, "ADD": 0.4}, examples=("병원 리마인더 취소",)),
         Intent("reminder.clear", nouns={"리마인더": 0.6, "리마인드": 0.6, "알림": 0.5},
-               verbs={"CANCEL": 0.2}, extras={"ALL": 0.3}, examples=("리마인더 전부 지워",)),
+               verbs={"CANCEL": 0.2}, extras={"ALL": 0.3}, avoid={"SET": 0.4, "ADD": 0.4},
+               examples=("리마인더 전부 지워",)),
     ]
 
     def extract(self, intent: str, req) -> dict[str, Any]:
@@ -224,11 +235,12 @@ class AlarmSkill(_Scheduled):
                slots={"at": 0.3}, avoid=ALARM_AVOID, required=("at",),
                examples=("내일 아침 7시 알람 맞춰줘", "30분 뒤에 깨워줘")),
         Intent("alarm.list", nouns={"알람": 0.7, "모닝콜": 0.7}, verbs={"SHOW": 0.3, "TELL": 0.2},
+               extras={"목록": 0.3, "리스트": 0.3},
                avoid={"CANCEL": 0.5, "CLOSE": 0.5, "SET": 0.3}, examples=("알람 뭐 있어",)),
         Intent("alarm.cancel", nouns={"알람": 0.7, "모닝콜": 0.7}, verbs={"CANCEL": 0.3, "CLOSE": 0.3},
-               avoid={"ALL": 0.4}, examples=("7시 알람 꺼줘",)),
+               avoid={"ALL": 0.4, "SET": 0.4}, examples=("7시 알람 꺼줘",)),
         Intent("alarm.clear", nouns={"알람": 0.6, "모닝콜": 0.6}, verbs={"CANCEL": 0.2, "CLOSE": 0.2},
-               extras={"ALL": 0.3}, examples=("알람 다 꺼줘",)),
+               extras={"ALL": 0.3}, avoid={"SET": 0.4}, examples=("알람 다 꺼줘",)),
     ]
 
     def handle(self, intent: str, req, slots: dict[str, Any]) -> Result | Confirm:

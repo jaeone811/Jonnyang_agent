@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
 
 import psutil
@@ -74,7 +75,9 @@ class UnsupportedVolume:
 
 class WindowsLauncher:
     def open(self, target: str) -> None:
-        os.startfile(os.path.expandvars(os.path.expanduser(target)))  # type: ignore[attr-defined]
+        if target.startswith("~") or "%" in target or re.match(r"^[A-Za-z]:[\\/]", target):
+            target = os.path.normpath(os.path.expandvars(os.path.expanduser(target)))
+        os.startfile(target)  # type: ignore[attr-defined]
 
 
 class UnsupportedLauncher:

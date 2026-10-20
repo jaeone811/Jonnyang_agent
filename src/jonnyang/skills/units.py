@@ -112,6 +112,9 @@ class UnitSkill(Skill):
                examples=("5평은 몇 제곱미터야", "10마일을 킬로미터로", "화씨 100도는 섭씨로")),
     ]
 
+    def protected_words(self) -> set[str]:
+        return set(UNITS) | set(TEMPS) | set(AMBIGUOUS)
+
     def handle(self, intent: str, req, slots: dict[str, Any]) -> Result:
         p = parse(req.text)
         out = convert(*p) if p else None

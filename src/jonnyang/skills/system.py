@@ -108,6 +108,9 @@ class AppSkill(Skill):
                    examples=("메모장 켜줘", "다운로드 폴더 열어", "계산기 실행")),
         ]
 
+    def protected_words(self) -> set[str]:
+        return {n.replace(" ", "") for n in self.ctx.aliases.names()}
+
     def find(self, req) -> tuple[str | None, float]:
         names = self.ctx.aliases.names()
         if not names:

@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from jonnyang.nlu import negation, timeparse
-from jonnyang.nlu.normalize import Analyzer, Morph, content_lemmas
+from jonnyang.nlu.normalize import Analyzer, Morph, command_morphs, content_lemmas
 from jonnyang.nlu.preprocess import preprocess
 
 QUOTE_RE = re.compile(r"[\"'“”‘’「『]([^\"'“”‘’」』]+)[\"'“”‘’」』]")
@@ -68,8 +68,13 @@ class NLU:
                 masked[i] = " "
         masked_text = "".join(masked)
         req.compact = re.sub(r"\s+", "", masked_text).lower()
-        group_lemmas = content_lemmas(req.morphs, pol.excluded_spans)
-        req.groups = self.analyzer.lexicon.groups_for(group_lemmas, " ".join(masked_text.split()))
+        cmd = command_morphs(req.morphs, pol.excluded_spans)
+        # 표면형 매칭은 제외 구간과 관형형 구간을 지운 원문 위치 그대로에서 한다 (위치로 선후를 비교하므로)
+        surface = list(text)
+        for s, e in pol.excluded_spans + [(m.start, m.end) for m in req.morphs if m not in cmd]:
+            for i in range(s, min(e, len(surface))):
+                surface[i] = " "
+        req.groups = self.analyzer.lexicon.groups_for(cmd, "".join(surface))
         req.numbers = [float(x) for x in re.findall(r"(?<![\d.])\d+(?:\.\d+)?", text)]
         req.quoted = [q.strip() for q in QUOTE_RE.findall(raw) if q.strip()]
         return req

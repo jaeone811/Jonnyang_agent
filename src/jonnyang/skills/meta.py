@@ -27,7 +27,7 @@ def _alias_hint(req) -> float:
     return 0.8 if any(p.search(req.text) for p in ALIAS_PATTERNS) else 0.0
 
 
-HELP_RE = re.compile(r"뭐\s*(?:할|하)\s*(?:수|줄\s*수)\s*있|뭘\s*할\s*수|어떻게\s*써|기능\s*뭐")
+HELP_RE = re.compile(r"뭐\s*(?:할|하)\s*(?:수|줄\s*수)\s*있|뭘?\s*할\s*줄\s*알|뭘\s*할\s*수|어떻게\s*써|기능\s*뭐")
 
 
 def _help_hint(req) -> float:
@@ -52,7 +52,8 @@ def _onoff(req) -> bool | None:
 class MetaSkill(Skill):
     name = "meta"
     intents = [
-        Intent("meta.help", nouns={"도움말": 1.0, "도움": 0.8, "명령어": 0.8, "사용법": 0.8, "기능": 0.6, "help": 1.0},
+        Intent("meta.help", nouns={"도움말": 1.0, "도움": 0.8, "명령어": 0.8, "사용법": 0.8, "기능": 0.6, "help": 1.0,
+                                     "도와주": 0.9, "돕": 0.8},
                hint=_help_hint, examples=("뭐 할 수 있어?", "도움말")),
         Intent("meta.undo", nouns={"되돌리기": 1.0, "실행취소": 1.0, "undo": 1.0}, verbs={"UNDO": 0.8},
                hint=_undo_hint, avoid={"CALL": 0.5}, examples=("방금 거 취소해", "되돌려줘")),
@@ -103,7 +104,7 @@ class MetaSkill(Skill):
         elif intent in ("persona.nyang", "persona.emoji", "wake.required"):
             on = _onoff(req)
             if on is not None:
-                slots["on"] = on
+                slots["enabled"] = on
         elif intent == "persona.profile":
             name = self.ctx.persona.find_profile(req.text)
             if name:
@@ -171,7 +172,7 @@ class MetaSkill(Skill):
                "wake.required": "wake.required"}[intent]
         current = {"persona.nyang": self.ctx.persona.nyang, "persona.emoji": self.ctx.persona.emoji,
                    "wake.required": self.ctx.wake_required}[key]
-        on = slots.get("on", not current)
+        on = slots.get("enabled", not current)
         self.ctx.storage.set_setting(key, on)
         return Result(f"{intent}_{'on' if on else 'off'}", undo={"settings": {key: current}}, undo_label="setting")
 

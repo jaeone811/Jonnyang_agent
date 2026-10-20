@@ -9,6 +9,7 @@ from typing import Iterable
 # 의미를 담는 품사만 남긴다. 조사(J*), 어미(E*), 기호(S* 중 SL/SN 제외)는 버린다.
 CONTENT_TAGS = ("NNG", "NNP", "NNB", "NR", "NP", "VV", "VA", "VX", "XR", "SL", "SH", "MAG", "MM", "IC")
 AUX_VERBS = {"주", "보", "있", "드리"}   # "맞춰 줘", "켜 봐"의 보조용언
+OPPOSITES = [("UP", "DOWN"), ("OPEN", "CLOSE")]
 
 
 @dataclass(frozen=True)
@@ -31,14 +32,19 @@ class Lexicon:
             for surf in spec.get("surface", []):
                 self.surface_groups.append((re.compile(rf"(?:^|\s){re.escape(surf)}"), group))
 
-    def groups_for(self, lemmas: Iterable[str], text: str) -> set[str]:
-        groups: set[str] = set()
-        for lemma in lemmas:
-            groups |= self.lemma_groups.get(lemma, set())
+    def groups_for(self, morphs: list["Morph"], text: str) -> set[str]:
+        """대표형 그룹. 반대 뜻 그룹(올려/줄여 등)이 같이 나오면 문장에서 나중에 나온 쪽만 남긴다."""
+        last: dict[str, int] = {}
+        for m in morphs:
+            for g in self.lemma_groups.get(m.form, ()):
+                last[g] = max(last.get(g, -1), m.start)
         for pat, group in self.surface_groups:
-            if pat.search(text):
-                groups.add(group)
-        return groups
+            for hit in pat.finditer(text):
+                last[group] = max(last.get(group, -1), hit.start())
+        for a, b in OPPOSITES:
+            if a in last and b in last:
+                del last[a if last[a] < last[b] else b]
+        return set(last)
 
 
 class Analyzer:
@@ -62,6 +68,22 @@ class Analyzer:
         if not text:
             return []
         return [Morph(t.form, t.tag, t.start, t.end) for t in self.kiwi.tokenize(text)]
+
+
+def command_morphs(morphs: list[Morph], skip_spans: list[tuple[int, int]] = ()) -> list[Morph]:
+    """명령 동사 후보. "방금 맞춘 타이머", "등록된 알림"처럼 관형형(ETM)으로 꾸미는 말은 뺀다."""
+    out = []
+    for i, m in enumerate(morphs):
+        if any(s <= m.start < e for s, e in skip_spans):
+            continue
+        nxt = morphs[i + 1] if i + 1 < len(morphs) else None
+        nxt2 = morphs[i + 2] if i + 2 < len(morphs) else None
+        if nxt is not None and nxt.tag == "ETM" and m.tag.startswith(("VV", "VA", "XSV", "XSA")):
+            continue
+        if nxt is not None and nxt2 is not None and nxt.tag.startswith(("XSV", "XSA")) and nxt2.tag == "ETM":
+            continue
+        out.append(m)
+    return out
 
 
 def content_lemmas(morphs: list[Morph], skip_spans: list[tuple[int, int]] = ()) -> list[str]:

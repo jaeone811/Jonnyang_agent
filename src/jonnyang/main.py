@@ -31,7 +31,7 @@ def main() -> None:
     persona_data = load_yaml("persona.yaml")
     banner = persona_data.get("banner")
     if banner:
-        console.say([banner.rstrip()])
+        console.raw(banner.rstrip())
     console.say([persona_data.get("loading", "...")])
 
     from jonnyang.app import build_app

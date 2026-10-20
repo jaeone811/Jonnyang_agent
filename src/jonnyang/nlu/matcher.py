@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Callable
 
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
     from jonnyang.nlu.pipeline import Request
 
 FUZZY_CUTOFF = 80
+EOJEOL_STRICT_CUTOFF = 83
 FUZZY_TAGS = ("NNG", "NNP", "SL", "XR")
 
 
@@ -41,26 +43,43 @@ class Candidate:
 
 
 class Matcher:
-    def __init__(self, intents: list[Intent], groups: set[str]):
+    def __init__(self, intents: list[Intent], groups: set[str], protected: Callable[[], set[str]] = set):
         self.intents = intents
         self.groups = groups
+        self.protected = protected   # 다른 스킬이 아는 진짜 단어(단위, 별칭). 오타로 보고 고치지 않는다.
         vocab = {k for it in intents for k in it.nouns if k not in groups}
         self.vocab = sorted(vocab)
         self.vocab_jamo = [jamo(v) for v in self.vocab]
 
     def _fuzzy(self, req: "Request") -> dict[str, float]:
         """사전에 없는 명사를 자모 유사도로 사전 단어에 붙인다. {사전단어: 유사도(0~1)}"""
-        known = set(self.vocab)
+        protected = self.protected()
+        known = set(self.vocab) | protected
         out: dict[str, float] = {}
         for m in req.morphs:
             word = m.form.lower() if m.tag == "SL" else m.form
             if not m.tag.startswith(FUZZY_TAGS) or len(word) < 2 or word in known or word in req.excluded:
                 continue
-            hit = process.extractOne(jamo(word), self.vocab_jamo, scorer=fuzz.ratio, score_cutoff=FUZZY_CUTOFF)
-            if hit:
-                target = self.vocab[hit[2]]
-                out[target] = max(out.get(target, 0.0), hit[1] / 100)
+            self._fuzzy_one(word, out)
+        # 형태소 분석이 오타 단어를 엉뚱하게 쪼갠 경우("배터랴" → 배터/이/랴)를 위해 어절 단위로도 본다.
+        for eojeol in req.text.split():
+            cands = {eojeol, eojeol[:-1], eojeol[:-2]}
+            if not re.fullmatch(r"[가-힣]{2,}", eojeol) or cands & known or eojeol in req.excluded:
+                continue
+            for cand in cands:
+                if len(cand) >= 2 and cand not in known:
+                    self._fuzzy_one(cand, out, strict=True)
         return out
+
+    def _fuzzy_one(self, word: str, out: dict[str, float], strict: bool = False) -> None:
+        hit = process.extractOne(jamo(word), self.vocab_jamo, scorer=fuzz.ratio, score_cutoff=FUZZY_CUTOFF)
+        if not hit:
+            return
+        target = self.vocab[hit[2]]
+        # 어절 단위 비교는 잡음이 많다("버리라" ≈ "배터리"). 첫 음절이 같거나 꽤 비슷할 때만 인정한다.
+        if strict and word[0] != target[0] and hit[1] < EOJEOL_STRICT_CUTOFF:
+            return
+        out[target] = max(out.get(target, 0.0), hit[1] / 100)
 
     def _hit(self, key: str, req: "Request", fuzzy: dict[str, float] | None) -> float:
         if key in self.groups:

@@ -9,6 +9,7 @@ from fractions import Fraction
 from typing import Any
 
 from jonnyang.nlu.matcher import Intent
+from jonnyang.nlu.numbers import parse_sino
 from jonnyang.skills.base import Result, Skill
 
 WORD_OPS = [
@@ -67,12 +68,18 @@ def to_number(v: Fraction) -> int | float:
     return int(v) if v.denominator == 1 else float(v)
 
 
+SINO_WORD = re.compile(r"(?<![가-힣])([일이삼사오육칠팔구십백천만억]+)(?![가-힣])")
+OP_WORDS = re.compile(r"더하기|플러스|빼기|마이너스|곱하기|나누기")
+
+
 def find_expression(text: str) -> str | None:
     t = PERCENT_OF.sub(lambda m: f"({m.group(1)}*{m.group(2)}/100)", text)
+    if OP_WORDS.search(t):   # "삼십 더하기 십오"처럼 단위 없는 한글 수사
+        t = SINO_WORD.sub(lambda m: str(int(v)) if (v := parse_sino(m.group(1))) is not None else m.group(1), t)
+    t = re.sub(r"(\d+(?:\.\d+)?)\s*의\s*제곱", r"(\1)^2", t)
     for pat, op in WORD_OPS:
         t = re.sub(pat, f" {op} ", t)
     t = re.sub(r"(?<=\d)\s*[xX]\s*(?=\d)", " * ", t)
-    t = re.sub(r"(\d+(?:\.\d+)?)\s*의\s*제곱", r"(\1)^2", t)
     best = None
     for m in EXPR.finditer(t):
         cand = m.group().strip()

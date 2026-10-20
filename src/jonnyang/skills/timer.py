@@ -31,14 +31,15 @@ AVOID_SET = {"CANCEL": 0.5, "CLOSE": 0.5, "SHOW": 0.4, "ALL": 0.3}
 class TimerSkill(Skill):
     name = "timer"
     intents = [
-        Intent("timer.set", nouns={"타이머": 0.7}, verbs={"SET": 0.3, "OPEN": 0.2}, slots={"duration": 0.3},
+        Intent("timer.set", nouns={"타이머": 0.7}, verbs={"SET": 0.3, "OPEN": 0.2, "재": 0.5}, slots={"duration": 0.3},
                avoid=AVOID_SET, required=("duration",),
                examples=("3분 타이머 맞춰줘", "라면 타이머 4분", "1시간 반 타이머")),
-        Intent("timer.list", nouns={"타이머": 0.7}, verbs={"SHOW": 0.3, "TELL": 0.2},
+        Intent("timer.list", nouns={"타이머": 0.7}, verbs={"SHOW": 0.3, "TELL": 0.2}, extras={"목록": 0.3},
                avoid={"CANCEL": 0.5, "CLOSE": 0.5, "SET": 0.3}, examples=("타이머 얼마나 남았어",)),
         Intent("timer.cancel", nouns={"타이머": 0.7}, verbs={"CANCEL": 0.3, "CLOSE": 0.3},
-               avoid={"ALL": 0.4}, examples=("타이머 취소해", "2번 타이머 꺼")),
+               avoid={"ALL": 0.4, "SET": 0.4}, examples=("타이머 취소해", "2번 타이머 꺼")),
         Intent("timer.clear", nouns={"타이머": 0.6}, verbs={"CANCEL": 0.2, "CLOSE": 0.2}, extras={"ALL": 0.3},
+               avoid={"SET": 0.4},
                examples=("타이머 전부 꺼",)),
     ]
 
@@ -91,7 +92,7 @@ class TimerSkill(Skill):
                 slots["label"] = label
         m = NO_RE.search(req.text)
         if m:
-            slots["no"] = int(m.group(1))
+            slots["index"] = int(m.group(1))
         return slots
 
     def handle(self, intent: str, req, slots: dict[str, Any]) -> Result | Confirm:
@@ -135,8 +136,8 @@ class TimerSkill(Skill):
         raise ValueError(intent)
 
     def _pick(self, timers: list[Timer], slots: dict[str, Any]) -> Timer | None:
-        if "no" in slots and 1 <= slots["no"] <= len(timers):
-            return timers[slots["no"] - 1]
+        if "index" in slots and 1 <= slots["index"] <= len(timers):
+            return timers[slots["index"] - 1]
         if "duration" in slots:
             same = [t for t in timers if t.duration == slots["duration"]]
             if len(same) == 1:

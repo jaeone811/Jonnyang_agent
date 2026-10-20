@@ -56,7 +56,7 @@ class Dispatcher:
                 it.skill = skill.name
                 intents.append(it)
         self.intents = intents
-        self.matcher = Matcher(intents, ctx.analyzer.lexicon.group_names)
+        self.matcher = Matcher(intents, ctx.analyzer.lexicon.group_names, self._protected)
         self.nlu = NLU(ctx.analyzer, ctx.settings.get("default_reminder_hour", 9))
         th = ctx.settings.get("thresholds", {})
         self.exec_th = th.get("execute", 0.7)
@@ -64,6 +64,9 @@ class Dispatcher:
         self.clarify_th = th.get("clarify", 0.4)
         self.pending_ttl = timedelta(seconds=ctx.settings.get("pending_timeout_sec", 60))
         self.pending: Pending | None = None
+
+    def _protected(self) -> set[str]:
+        return set().union(*(s.protected_words() for s in self.ctx.skills.values()))
 
     # ── 판정 (실행 없음, 테스트에서 직접 사용) ──
     def interpret(self, raw: str, now: datetime | None = None, forced: Intent | None = None) -> Interpretation:

@@ -18,7 +18,7 @@ user_words:
 
 groups:
   SET:
-    lemmas: [맞추, 설정, 걸, 예약, 잡, 등록, 세팅]
+    lemmas: [맞추, 맞, 설정, 걸, 예약, 잡, 등록, 세팅]
     surface: [맞춰, 맞추, 설정, 걸어]
   OPEN:
     lemmas: [켜, 켜다, 틀, 실행, 열, 띄우, 시작]
@@ -33,11 +33,11 @@ groups:
     lemmas: [추가, 넣, 담, 적]
     surface: [추가, 넣어, 담아, 적어]
   SHOW:
-    lemmas: [보여주, 보이, 확인, 조회, 뭐, 무엇, 얼마나, 얼마, 몇, 남, 어떻, 어때, 상태]
+    lemmas: [보여주, 보이, 확인, 조회, 뭐, 무엇, 얼마나, 얼마, 몇, 남, 어떻, 어때, 상태, 언제]
     surface: [보여, 뭐, 몇, 얼마]
   TELL:
     lemmas: [알리, 말하, 상기]
-    surface: [알려]
+    surface: [알려, 말해]
   UP:
     lemmas: [올리, 키우, 높이, 크]
     surface: [올려, 키워, 높여, 크게]

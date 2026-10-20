@@ -53,6 +53,10 @@ class Skill:
     def undo(self, intent: str, payload: dict[str, Any]) -> Result:
         return Result("undo.unsupported", ok=False)
 
+    def protected_words(self) -> set[str]:
+        """이 스킬이 의미를 아는 단어. 다른 의도의 키워드로 오타 보정되지 않게 보호한다."""
+        return set()
+
     def on_start(self) -> list[Result]:
         """프로그램 시작 시 할 일(예약 복구, 놓친 알림)."""
         return []
