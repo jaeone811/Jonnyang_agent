@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jonnyang"
+version = "0.1.0"
+description = "존냥이: 규칙 기반 한국어 개인 비서 (Windows)"
+requires-python = ">=3.10"
+dependencies = [
+    "kiwipiepy>=0.24.0",
+    "rapidfuzz>=3.14",
+    "psutil>=7.0",
+    "pyyaml>=6.0",
+    "pycaw>=20251023; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+jonnyang = "jonnyang.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["windows: Windows에서만 도는 실제 시스템 스모크 테스트"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = ["B008"]

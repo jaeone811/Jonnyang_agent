@@ -1,0 +1,28 @@
+# 앱/폴더 별칭 사전 (사람이 편집하는 파일, 프로그램은 읽기만 함)
+# "메모장을 노트라고 불러" 처럼 명령으로 등록한 별칭은 data/jonnyang.db에 따로 저장되고 이 파일보다 우선한다.
+#
+# apps: os.startfile()로 연다. 실행 파일 이름, 전체 경로, URI(ms-settings: 등) 모두 가능.
+#       PATH나 App Paths에 등록 안 된 프로그램은 전체 경로를 적어라.
+# folders: 탐색기로 연다. ~ 와 %환경변수% 사용 가능.
+
+apps:
+  메모장: notepad.exe
+  계산기: calc.exe
+  그림판: mspaint.exe
+  탐색기: explorer.exe
+  작업 관리자: taskmgr.exe
+  명령 프롬프트: cmd.exe
+  파워쉘: powershell.exe
+  설정: "ms-settings:"
+  블루투스 설정: "ms-settings:bluetooth"
+  디스플레이 설정: "ms-settings:display"
+  크롬: chrome.exe
+  엣지: msedge.exe
+
+folders:
+  다운로드: "~/Downloads"
+  바탕화면: "~/Desktop"
+  문서: "~/Documents"
+  사진: "~/Pictures"
+  음악: "~/Music"
+  동영상: "~/Videos"

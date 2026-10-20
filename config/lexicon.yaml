@@ -1,0 +1,61 @@
+# 존냥이 어휘 사전 (사람이 편집하는 파일, 프로그램은 읽기만 함)
+#
+# user_words: 형태소 분석기가 쪼개지 않도록 등록하는 단어.
+# groups: 같은 뜻의 말을 대표형(대문자)으로 묶는다. 스킬의 의도 규칙은 이 대표형을 쓴다.
+#   lemmas  - 형태소 분석 결과의 어근(동사는 "맞추", "끄"처럼 어간)
+#   surface - 형태소 분석이 틀려도 잡을 수 있게 어절 앞부분으로 매칭할 표면형
+
+user_words:
+  - [존냥, NNP]
+  - [냥체, NNG]
+  - [이모지, NNG]
+  - [호출어, NNG]
+  - [음소거, NNG]
+  - [타이머, NNG]
+  - [리마인더, NNG]
+  - [더치페이, NNG]
+  - [엔빵, NNG]
+
+groups:
+  SET:
+    lemmas: [맞추, 설정, 걸, 예약, 잡, 등록, 세팅]
+    surface: [맞춰, 맞추, 설정, 걸어]
+  OPEN:
+    lemmas: [켜, 켜다, 틀, 실행, 열, 띄우, 시작]
+    surface: [켜, 틀어, 실행, 열어]
+  CLOSE:
+    lemmas: [끄, 닫, 종료, 멈추, 중지, 그만]
+    surface: [꺼, 끄, 끌, 종료, 멈춰]
+  CANCEL:
+    lemmas: [취소, 지우, 삭제, 없애, 제거, 빼, 해제]
+    surface: [취소, 지워, 삭제, 없애, 빼]
+  ADD:
+    lemmas: [추가, 넣, 담, 적]
+    surface: [추가, 넣어, 담아, 적어]
+  SHOW:
+    lemmas: [보여주, 보이, 확인, 조회, 뭐, 무엇, 얼마나, 얼마, 몇, 남, 어떻, 어때, 상태]
+    surface: [보여, 뭐, 몇, 얼마]
+  TELL:
+    lemmas: [알리, 말하, 상기]
+    surface: [알려]
+  UP:
+    lemmas: [올리, 키우, 높이, 크]
+    surface: [올려, 키워, 높여, 크게]
+  DOWN:
+    lemmas: [내리, 줄이, 낮추, 작]
+    surface: [내려, 줄여, 낮춰, 작게]
+  ALL:
+    lemmas: [다, 전부, 모두, 전체, 싹, 몽땅, 모든]
+    surface: [전부, 모두, 전체, 싹, 몽땅, 모든]
+  EMPTY:
+    lemmas: [비우]
+    surface: [비워, 비우]
+  UNDO:
+    lemmas: [되돌리, 되돌, 복구, 원래]
+    surface: [되돌, 복구, 원래대로]
+  CALL:
+    lemmas: [부르]
+    surface: [불러, 부를]
+  RELEASE:
+    lemmas: [풀, 해제]
+    surface: [풀어, 해제]

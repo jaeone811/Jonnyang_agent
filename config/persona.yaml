@@ -1,0 +1,407 @@
+# 존냥이 말투 사전 (사람이 편집하는 파일)
+#
+# 규칙
+# - {중괄호} 안은 스킬이 넘겨준 값이다. 숫자·시간·경로 같은 핵심 값은 빼먹어도 문장 끝에 자동으로 붙는다.
+# - 값이 여러 개인 리스트는 랜덤으로 하나 고른다.
+# - {items}는 목록 줄들(각 줄은 *.item 템플릿), {note}는 시간 해석 가정("오후로 알아들음" 등)이다.
+# - 프로필 체인: 현재 프로필 → fallback → plain. 냥체를 끄면 plain만 쓴다.
+# - 새 말투를 만들려면 profiles 아래에 추가하고 fallback: soft 를 주면 바꾸고 싶은 키만 적으면 된다.
+
+default_profile: soft
+emoji_default: true
+
+banner: |2
+     /\_/\
+    ( =^.^= )   존냥이
+     )     (    규칙 기반 고양이 비서
+    (__)_(__)   (종료: "종료" / 디버그: /nlu 문장)
+
+loading: "존냥이 깨어나는 중... (형태소 사전 불러오는 데 몇 초 걸린다냥)"
+
+# "말투 ○○하게" 명령에서 찾을 단어 → 프로필 이름
+profile_aliases:
+  순하: soft
+  순한: soft
+  기본: soft
+  원래: soft
+  시크: chic
+  도도: chic
+  디시: dc
+
+labels:
+  # 되묻기 선택지
+  intent.timer.set: 타이머 맞추기
+  intent.timer.list: 타이머 남은 시간 보기
+  intent.timer.cancel: 타이머 취소
+  intent.timer.clear: 타이머 전부 취소
+  intent.alarm.set: 알람 맞추기
+  intent.alarm.list: 알람 목록 보기
+  intent.alarm.cancel: 알람 취소
+  intent.alarm.clear: 알람 전부 취소
+  intent.reminder.set: 리마인더 등록
+  intent.reminder.list: 리마인더 목록 보기
+  intent.reminder.cancel: 리마인더 취소
+  intent.reminder.clear: 리마인더 전부 취소
+  intent.list.add: 목록에 추가
+  intent.list.show: 목록 보기
+  intent.list.remove: 목록에서 빼기
+  intent.list.clear: 목록 비우기
+  intent.calc.eval: 계산
+  intent.units.convert: 단위 변환
+  intent.volume.up: 볼륨 올리기
+  intent.volume.down: 볼륨 내리기
+  intent.volume.set: 볼륨 맞추기
+  intent.volume.mute: 음소거
+  intent.volume.unmute: 음소거 해제
+  intent.volume.get: 현재 볼륨 보기
+  intent.app.open: 앱/폴더 열기
+  intent.sys.cpu: CPU 사용률 보기
+  intent.sys.memory: 메모리 사용량 보기
+  intent.sys.disk: 디스크 용량 보기
+  intent.sys.battery: 배터리 보기
+  intent.sys.overview: 시스템 상태 보기
+  intent.meta.help: 도움말
+  intent.meta.undo: 방금 한 일 되돌리기
+  intent.meta.alias: 별칭 등록
+  intent.persona.nyang: 냥체 켜고 끄기
+  intent.persona.emoji: 이모지 켜고 끄기
+  intent.persona.profile: 말투 바꾸기
+  intent.wake.required: 호출어 켜고 끄기
+  intent.chat.greet: 인사
+  intent.chat.thanks: 고맙다는 말
+  intent.chat.meow: 수다
+  # 도움말 분류
+  skill.timer: 타이머
+  skill.alarm: 알람
+  skill.reminder: 리마인더
+  skill.lists: 목록
+  skill.calc: 계산
+  skill.units: 단위 변환
+  skill.volume: 볼륨
+  skill.apps: 앱/폴더 열기
+  skill.sysinfo: 시스템 상태
+  skill.meta: 기타
+  # 되돌리기 확인 문구에 들어갈 "무엇을"
+  undo.timer.set: "{duration} 타이머 맞춘 것"
+  undo.timer.cancel: "{duration} 타이머 취소한 것"
+  undo.timer.clear: "타이머 {count}개 취소한 것"
+  undo.alarm.set: "{at} 알람 맞춘 것"
+  undo.alarm.cancel: "{at} 알람 취소한 것"
+  undo.alarm.clear: "알람 {count}개 취소한 것"
+  undo.reminder.set: "{at} '{message}' 리마인더 등록한 것"
+  undo.reminder.cancel: "'{message}' 리마인더 취소한 것"
+  undo.reminder.clear: "리마인더 {count}개 지운 것"
+  undo.list.add: "{list} 목록에 {items} 추가한 것"
+  undo.list.remove: "{list} 목록에서 {items} 뺀 것"
+  undo.list.clear: "{list} 목록 비운 것 ({count}개)"
+  undo.volume: "볼륨 바꾼 것"
+  undo.alias: "'{alias}' 별칭 등록한 것"
+  undo.setting: "설정 바꾼 것"
+  # 시간 해석 가정
+  assumed.pm: 오후로 알아들음
+  assumed.am: 오전으로 알아들음
+  assumed.nearest: 가장 가까운 시각으로 잡음
+  assumed.rolled_tomorrow: 오늘은 지나서 내일로 잡음
+  assumed.default_time: 시각이 없어서 기본 시각으로 잡음
+  assumed.period_default: 대략적인 시각으로 잡음
+  assumed.next_month: 이번 달은 지나서 다음 달로 잡음
+  assumed.next_year: 올해는 지나서 내년으로 잡음
+
+profiles:
+  # ───────────── 순한 냥체 (기본) ─────────────
+  soft:
+    title: 순한 냥체
+    templates:
+      greet.morning: ["좋은 아침이다냥! 존냥이 대기중이다냥 ☀️", "왔냐옹? 아침부터 부지런하다냥"]
+      greet.afternoon: ["왔냐옹? 존냥이 대기중이다냥 😺", "낮잠 자다 깼다냥. 뭐 해줄까냥?"]
+      greet.evening: ["저녁이다냥. 오늘도 수고했다냥 🌙", "왔냐옹? 존냥이 대기중이다냥"]
+      greet.night: ["이 시간까지 안 자냐옹? 존냥이 대기중이다냥 🌙"]
+      wake: ["불렀냥? 😺", "냥? 뭐 해줄까냥?"]
+      ignored: "(존냥이는 \"존냥아\"로 불러야 대답한다냥)"
+      farewell: ["잘 가라냥. 또 불러라냥 👋", "존냥이 자러 간다냥 💤"]
+      negated: ["알았다냥, 안 할게냥.", "안 하는 걸로 알겠다냥."]
+      cancelled: ["알았다냥, 취소했다냥.", "그럼 안 할게냥."]
+      fallback: "무슨 말인지 모르겠다냥… 이런 건 할 수 있다냥: {examples}"
+      excluded_only: "{excluded} 말고 뭘 해줄까냥?"
+      clarify: "어느 쪽이냥? 번호로 말해달라냥\n{items}"
+      clarify_one: "{label} 해달라는 거냥? (응/아니)"
+      clarify.item: "  {no}. {label}"
+      ask.duration: "몇 분짜리로 맞출까냥?"
+      ask.at: "언제 알려줄까냥? (예: 내일 오후 3시, 10분 뒤)"
+      ask.items: "{list} 목록에 뭘 넣을까냥?"
+      ask.level: "볼륨을 몇으로 맞출까냥? (0~100)"
+      ask.alias: "별칭은 이렇게 말해달라냥: \"메모장을 노트라고 불러\""
+      error.internal: "앗, 존냥이가 넘어졌다냥… 원인: {reason}"
+      error.unsupported: "이 컴퓨터에선 그 기능을 못 쓴다냥 (Windows에서만 된다냥)"
+      time.past_today: "오늘 그 시각은 이미 지났다냥. 다시 말해달라냥"
+      time.past_date: "그 날짜는 이미 지났다냥. 다시 말해달라냥"
+      time.multiple: "시간이 여러 개라서 헷갈린다냥. 하나만 말해달라냥"
+      time.vague: "'이따가' 말고 정확한 시간을 말해달라냥 (예: 30분 뒤, 오후 3시)"
+      time.recurring: "반복 알림('매일', '마다')은 아직 못 한다냥. 한 번짜리만 된다냥"
+      time.invalid: "그런 날짜/시각은 없다냥. 다시 말해달라냥"
+
+      timer.set: ["{label} {duration} 타이머 맞췄다냥! ⏱️ {end}에 울린다냥", "알았다냥, {label} {duration} 잰다냥. {end}에 부를게냥"]
+      timer.bad_duration: "{duration}짜리 타이머는 못 맞춘다냥 (1초~7일까지 된다냥)"
+      timer.none: "돌아가는 타이머가 없다냥."
+      timer.list: "타이머 {count}개 돌아가는 중이다냥\n{items}"
+      timer.item: "  {no}. {label} {duration} 타이머 — {remaining} 남음"
+      timer.which: "타이머가 {count}개라 어떤 건지 모르겠다냥. \"2번 타이머 취소\"처럼 말해달라냥\n{items}"
+      timer.cancel: "{label} {duration} 타이머 껐다냥. ({remaining} 남아 있었다냥)"
+      confirm.timer_clear: "타이머 {count}개 전부 끌거냥? (응/아니)\n{items}"
+      timer.clear: "타이머 {count}개 다 껐다냥."
+      timer.done: ["삐용! {label} {duration} 끝났다냥 ⏰", "삐용삐용! {label} {duration} 다 됐다냥 ⏰"]
+
+      alarm.set: "알람 맞췄다냥! ⏰ {at}에 깨울게냥 {note}"
+      alarm.none: "맞춰둔 알람이 없다냥."
+      alarm.list: "알람 {count}개 있다냥\n{items}"
+      alarm.item: "  {no}. {at}"
+      alarm.which: "알람이 {count}개라 어떤 건지 모르겠다냥. \"1번 알람 꺼\"처럼 말해달라냥\n{items}"
+      alarm.cancel: "{at} 알람 껐다냥."
+      confirm.alarm_clear: "알람 {count}개 전부 끌거냥? (응/아니)\n{items}"
+      alarm.clear: "알람 {count}개 다 껐다냥."
+      alarm.done: ["일어나라냥!! ⏰ {at} 알람이다냥", "냐아앙! {at}이다냥, 일어나라냥 ⏰"]
+      alarm.missed: "존냥이가 꺼져 있는 동안 놓친 알람이 {count}개 있다냥\n{items}"
+      alarm.missed_item: "  - {at}"
+
+      reminder.set: "알았다냥! {at}에 '{message}' 알려줄게냥 📝 {note}"
+      reminder.none: "등록된 리마인더가 없다냥."
+      reminder.list: "리마인더 {count}개 있다냥\n{items}"
+      reminder.item: "  {no}. {at} — {message}"
+      reminder.which: "리마인더가 {count}개라 어떤 건지 모르겠다냥. \"2번 리마인더 취소\"처럼 말해달라냥\n{items}"
+      reminder.cancel: "{at} '{message}' 리마인더 지웠다냥."
+      confirm.reminder_clear: "리마인더 {count}개 전부 지울거냥? (응/아니)\n{items}"
+      reminder.clear: "리마인더 {count}개 다 지웠다냥."
+      reminder.done: ["냥! 시간 됐다냥 📝 '{message}'", "까먹지 마라냥! '{message}' 할 시간이다냥 📝"]
+      reminder.missed: "존냥이가 꺼져 있는 동안 지나간 리마인더가 {count}개 있다냥\n{items}"
+      reminder.missed_item: "  - {at} — {message}"
+
+      list.add: "{list} 목록에 {items} 넣었다냥 🛒 (지금 {count}개)"
+      list.show: "{list} 목록이다냥 ({count}개)\n{items}"
+      list.item: "  {no}. {item}"
+      list.empty: "{list} 목록은 비어 있다냥."
+      list.remove: "{list} 목록에서 {items} 뺐다냥."
+      list.not_found: "{list} 목록에 {items}(이)가 없다냥."
+      confirm.list_clear: "{list} 목록 {count}개를 전부 지울거냥? (응/아니)\n{items}"
+      list.clear: "{list} 목록 비웠다냥. ({count}개 지움)"
+
+      calc.result: ["{expr} = {value} 이다냥 🧮", "계산했다냥: {expr} = {value}"]
+      calc.discount: "{price}원에서 {percent}% 할인하면 {value}원이다냥 ({saved}원 아낌)"
+      calc.dutch: "{total}원을 {people}명이 나누면 1인당 {per}원이다냥 💸"
+      calc.dutch_rem: "{total}원을 {people}명이 나누면 1인당 {per}원이고, {rem}명은 {per_plus}원 내면 딱 맞는다냥 💸"
+      calc.error: "계산식을 못 찾겠다냥. \"3 더하기 4\"처럼 말해달라냥"
+      calc.zero: "0으로는 못 나눈다냥! ({expr})"
+      calc.syntax: "계산식이 이상하다냥: {expr}"
+      calc.too_big: "숫자가 너무 커서 못 한다냥: {expr}"
+
+      units.result: "{value}{src} = {result}{dst} 이다냥 📏"
+      units.error: "그 단위는 못 바꾼다냥. \"5평은 몇 제곱미터\"처럼 말해달라냥"
+
+      volume.up: "볼륨 올렸다냥 🔊 {before} → {level}"
+      volume.down: "볼륨 내렸다냥 🔉 {before} → {level}"
+      volume.set: "볼륨 {level}(으)로 맞췄다냥 🔊"
+      volume.mute: "쉿, 음소거했다냥 🔇"
+      volume.unmute: "음소거 풀었다냥 🔊 (볼륨 {level})"
+      volume.get: "지금 볼륨은 {level}이다냥"
+
+      app.open: "{name} 열었다냥 🚀"
+      folder.open: "{name} 폴더 열었다냥 📂 ({target})"
+      app.not_found: "뭘 열지 모르겠다냥. aliases.yaml에 없는 건 \"메모장을 노트라고 불러\"처럼 등록해달라냥"
+      app.error: "{name}을(를) 못 열었다냥. 경로: {target} / 원인: {reason}"
+
+      sys.cpu: "CPU는 {cpu}% 쓰는 중이다냥 💻"
+      sys.memory: "메모리는 {mem_used} / {mem_total} ({mem_percent}%) 쓰는 중이다냥"
+      sys.disk: "디스크 상태다냥 💾\n{items}"
+      sys.disk_item: "  {mount} {free} 남음 (전체 {total}, {percent}% 사용)"
+      sys.battery: "배터리 {percent}% 남았다냥 🔋 (약 {left} 버틴다냥)"
+      sys.battery_plugged: "배터리 {percent}%, 충전 중이다냥 🔌"
+      sys.battery_nolife: "배터리 {percent}% 남았다냥 🔋"
+      sys.no_battery: "이 컴퓨터는 배터리가 없다냥 (데스크톱이다냥)"
+      sys.overview: "시스템 상태다냥 💻 CPU {cpu}% / 메모리 {mem_percent}% / 배터리 {battery}\n{items}"
+
+      meta.help: "존냥이는 이런 걸 할 수 있다냥 😺\n{items}"
+      meta.help_item: "  • {skill}: {examples}"
+      undo.nothing: "되돌릴 게 없다냥."
+      confirm.undo: "{action}, 되돌릴거냥? (응/아니)"
+      undo.done: "되돌렸다냥: {action}"
+      undo.expired: "그건 이미 시간이 지나서 못 되돌린다냥."
+      undo.unsupported: "그건 되돌릴 수 없다냥."
+      alias.set: "이제 '{alias}'라고 하면 {target} 연다냥 ✨"
+      alias.bad_target: "'{target}'이(가) 뭔지 모르겠다냥. 이미 있는 별칭이나 실제 경로를 말해달라냥"
+      confirm.alias_overwrite: "'{alias}'는 지금 {old}다냥. {target}(으)로 바꿀거냥? (응/아니)"
+      persona.nyang_on: "냥체 다시 켰다냥! 😺"
+      persona.nyang_off: "냥체 껐다냥… 아니 껐습니다."
+      persona.emoji_on: "이모지 켰다냥 ✨"
+      persona.emoji_off: "이모지 껐다냥."
+      persona.profile: "말투를 '{profile}'(으)로 바꿨다냥"
+      persona.profile_unknown: "그런 말투는 없다냥. 고를 수 있는 건: {profiles}"
+      wake.required_on: "이제 \"존냥아\"로 불러야 대답한다냥"
+      wake.required_off: "이제 그냥 말해도 알아듣는다냥"
+      chat.greet: ["안녕이다냥! 😺", "왔냐옹?", "냥냥, 안녕!"]
+      chat.thanks: ["별말씀을이다냥. 츄르면 된다냥 🐟", "고맙다니 기분 좋다냥 😻"]
+      chat.meow: ["야옹~ 😺", "츄르 줄 거냥? 🐟", "심심하면 쓰다듬어 달라냥", "…귀찮다냥. 그래도 놀아줄게냥", "골골골골… 😽"]
+
+  # ───────────── 시크한 냥 (soft에서 바꾸고 싶은 것만) ─────────────
+  chic:
+    title: 시크한 냥
+    fallback: soft
+    templates:
+      greet.morning: "…아침이네. 왔냥."
+      greet.afternoon: "왔냥. 용건만 말해라냥."
+      greet.evening: "저녁이다냥. 뭐."
+      greet.night: "안 자냥? …뭐 해줄까."
+      wake: "…왜 불렀냥."
+      negated: "안 한다냥. 원래 하기 싫었다냥."
+      fallback: "뭔 소린지 모르겠다냥. 이런 거나 말해라냥: {examples}"
+      timer.set: "{duration}. {end}에 부른다냥."
+      timer.done: "{label} {duration} 끝. 삐용."
+      alarm.set: "{at}. 깨워준다냥. {note}"
+      alarm.done: "{at}이다냥. 일어나라냥."
+      reminder.set: "{at}에 '{message}'. 기억해준다냥. {note}"
+      reminder.done: "'{message}'. 시간이다냥."
+      list.add: "{list} 목록에 {items}. 넣었다냥. ({count}개)"
+      calc.result: "{expr} = {value}. 이 정도는 직접 해라냥."
+      chat.greet: "…안녕."
+      chat.thanks: "됐다냥. 츄르나 줘라냥."
+      chat.meow: ["…야옹.", "귀찮다냥.", "츄르 있으면 생각해보겠다냥."]
+
+  # ───────────── 디시 감성 예시 (원하는 대로 고쳐 써라) ─────────────
+  dc:
+    title: 디시냥
+    fallback: soft
+    templates:
+      greet.afternoon: "ㅎㅇ 존냥이 대기중임 ㅇㅇ"
+      greet.evening: "ㅎㅇ 존냥이 대기중임 ㅇㅇ"
+      greet.morning: "아침부터 뭐함 ㅋㅋ 존냥이 대기중임"
+      greet.night: "이 시간에 안 자고 뭐함 ㅋㅋ"
+      fallback: "뭔 소린지 모르겠음;; 이런 거 됨: {examples}"
+      negated: "ㅇㅋ 안 함"
+      cancelled: "ㅇㅋ 취소함"
+      timer.set: "{duration} 타이머 ㄱㄱ {end}에 울림"
+      timer.done: "삐용 {label} {duration} 끝남 ㅋㅋ"
+      alarm.set: "{at} 알람 맞춤 ㅇㅇ {note}"
+      reminder.set: "{at}에 '{message}' 알려줌 ㅇㅇ {note}"
+      list.add: "{list} 목록에 {items} 넣음 ({count}개)"
+      calc.result: "{expr} = {value} ㅇㅇ"
+      chat.meow: ["냥 ㅋㅋ", "츄르 내놔라 ㅡㅡ", "ㅈㄴ 귀찮음 ㅋㅋ"]
+
+  # ───────────── 냥체 끔 (전체 키 필수) ─────────────
+  plain:
+    title: 기본 말투
+    templates:
+      greet.morning: "좋은 아침입니다. 존냥이 대기 중입니다."
+      greet.afternoon: "존냥이 대기 중입니다."
+      greet.evening: "좋은 저녁입니다. 존냥이 대기 중입니다."
+      greet.night: "늦은 시간이네요. 존냥이 대기 중입니다."
+      wake: "부르셨나요?"
+      ignored: "(\"존냥아\"로 시작해서 말해 주세요)"
+      farewell: "종료합니다."
+      negated: "알겠습니다. 실행하지 않을게요."
+      cancelled: "취소했습니다."
+      fallback: "무슨 말인지 모르겠어요. 이런 걸 할 수 있어요: {examples}"
+      excluded_only: "{excluded} 말고 무엇을 할까요?"
+      clarify: "어느 쪽인가요? 번호로 말해 주세요.\n{items}"
+      clarify_one: "{label} 맞나요? (응/아니)"
+      clarify.item: "  {no}. {label}"
+      ask.duration: "몇 분으로 맞출까요?"
+      ask.at: "언제 알려 드릴까요? (예: 내일 오후 3시, 10분 뒤)"
+      ask.items: "{list} 목록에 무엇을 넣을까요?"
+      ask.level: "볼륨을 몇으로 맞출까요? (0~100)"
+      ask.alias: "별칭은 이렇게 말해 주세요: \"메모장을 노트라고 불러\""
+      error.internal: "오류가 났습니다. 원인: {reason}"
+      error.unsupported: "이 컴퓨터에서는 지원하지 않는 기능입니다 (Windows 전용)."
+      time.past_today: "오늘 그 시각은 이미 지났습니다."
+      time.past_date: "그 날짜는 이미 지났습니다."
+      time.multiple: "시간 표현이 여러 개입니다. 하나만 말해 주세요."
+      time.vague: "정확한 시간을 말해 주세요 (예: 30분 뒤, 오후 3시)."
+      time.recurring: "반복 알림은 아직 지원하지 않습니다."
+      time.invalid: "없는 날짜나 시각입니다."
+      timer.set: "{label} {duration} 타이머를 맞췄습니다. {end}에 울립니다."
+      timer.bad_duration: "{duration} 타이머는 맞출 수 없습니다 (1초~7일)."
+      timer.none: "실행 중인 타이머가 없습니다."
+      timer.list: "타이머 {count}개 실행 중\n{items}"
+      timer.item: "  {no}. {label} {duration} 타이머 — {remaining} 남음"
+      timer.which: "타이머가 {count}개입니다. \"2번 타이머 취소\"처럼 말해 주세요.\n{items}"
+      timer.cancel: "{label} {duration} 타이머를 취소했습니다. ({remaining} 남아 있었음)"
+      confirm.timer_clear: "타이머 {count}개를 모두 취소할까요? (응/아니)\n{items}"
+      timer.clear: "타이머 {count}개를 취소했습니다."
+      timer.done: "{label} {duration} 타이머가 끝났습니다."
+      alarm.set: "{at} 알람을 맞췄습니다. {note}"
+      alarm.none: "맞춘 알람이 없습니다."
+      alarm.list: "알람 {count}개\n{items}"
+      alarm.item: "  {no}. {at}"
+      alarm.which: "알람이 {count}개입니다. \"1번 알람 꺼\"처럼 말해 주세요.\n{items}"
+      alarm.cancel: "{at} 알람을 껐습니다."
+      confirm.alarm_clear: "알람 {count}개를 모두 끌까요? (응/아니)\n{items}"
+      alarm.clear: "알람 {count}개를 껐습니다."
+      alarm.done: "{at} 알람입니다."
+      alarm.missed: "꺼져 있는 동안 지난 알람 {count}개\n{items}"
+      alarm.missed_item: "  - {at}"
+      reminder.set: "{at}에 '{message}' 알려 드릴게요. {note}"
+      reminder.none: "등록된 리마인더가 없습니다."
+      reminder.list: "리마인더 {count}개\n{items}"
+      reminder.item: "  {no}. {at} — {message}"
+      reminder.which: "리마인더가 {count}개입니다. \"2번 리마인더 취소\"처럼 말해 주세요.\n{items}"
+      reminder.cancel: "{at} '{message}' 리마인더를 지웠습니다."
+      confirm.reminder_clear: "리마인더 {count}개를 모두 지울까요? (응/아니)\n{items}"
+      reminder.clear: "리마인더 {count}개를 지웠습니다."
+      reminder.done: "리마인더: '{message}'"
+      reminder.missed: "꺼져 있는 동안 지난 리마인더 {count}개\n{items}"
+      reminder.missed_item: "  - {at} — {message}"
+      list.add: "{list} 목록에 {items} 추가했습니다. (현재 {count}개)"
+      list.show: "{list} 목록 ({count}개)\n{items}"
+      list.item: "  {no}. {item}"
+      list.empty: "{list} 목록이 비어 있습니다."
+      list.remove: "{list} 목록에서 {items} 뺐습니다."
+      list.not_found: "{list} 목록에 {items}이(가) 없습니다."
+      confirm.list_clear: "{list} 목록 {count}개를 모두 지울까요? (응/아니)\n{items}"
+      list.clear: "{list} 목록을 비웠습니다. ({count}개)"
+      calc.result: "{expr} = {value}"
+      calc.discount: "{price}원에서 {percent}% 할인하면 {value}원입니다. ({saved}원 절약)"
+      calc.dutch: "{total}원을 {people}명이 나누면 1인당 {per}원입니다."
+      calc.dutch_rem: "{total}원을 {people}명이 나누면 1인당 {per}원, {rem}명은 {per_plus}원 내면 맞습니다."
+      calc.error: "계산식을 찾지 못했습니다. \"3 더하기 4\"처럼 말해 주세요."
+      calc.zero: "0으로 나눌 수 없습니다. ({expr})"
+      calc.syntax: "계산식이 올바르지 않습니다: {expr}"
+      calc.too_big: "숫자가 너무 큽니다: {expr}"
+      units.result: "{value}{src} = {result}{dst}"
+      units.error: "변환할 수 없는 단위입니다."
+      volume.up: "볼륨을 올렸습니다. {before} → {level}"
+      volume.down: "볼륨을 내렸습니다. {before} → {level}"
+      volume.set: "볼륨을 {level}(으)로 맞췄습니다."
+      volume.mute: "음소거했습니다."
+      volume.unmute: "음소거를 해제했습니다. (볼륨 {level})"
+      volume.get: "현재 볼륨은 {level}입니다."
+      app.open: "{name}을(를) 열었습니다."
+      folder.open: "{name} 폴더를 열었습니다. ({target})"
+      app.not_found: "무엇을 열지 모르겠습니다. aliases.yaml에 추가하거나 별칭을 등록해 주세요."
+      app.error: "{name}을(를) 열지 못했습니다. 경로: {target} / 원인: {reason}"
+      sys.cpu: "CPU 사용률 {cpu}%"
+      sys.memory: "메모리 {mem_used} / {mem_total} ({mem_percent}%)"
+      sys.disk: "디스크\n{items}"
+      sys.disk_item: "  {mount} {free} 남음 (전체 {total}, {percent}% 사용)"
+      sys.battery: "배터리 {percent}% (약 {left} 남음)"
+      sys.battery_plugged: "배터리 {percent}%, 충전 중"
+      sys.battery_nolife: "배터리 {percent}%"
+      sys.no_battery: "배터리가 없는 컴퓨터입니다."
+      sys.overview: "CPU {cpu}% / 메모리 {mem_percent}% / 배터리 {battery}\n{items}"
+      meta.help: "할 수 있는 일\n{items}"
+      meta.help_item: "  • {skill}: {examples}"
+      undo.nothing: "되돌릴 작업이 없습니다."
+      confirm.undo: "{action}, 되돌릴까요? (응/아니)"
+      undo.done: "되돌렸습니다: {action}"
+      undo.expired: "시간이 지나서 되돌릴 수 없습니다."
+      undo.unsupported: "되돌릴 수 없는 작업입니다."
+      alias.set: "이제 '{alias}'(이)라고 하면 {target}을(를) 엽니다."
+      alias.bad_target: "'{target}'을(를) 찾을 수 없습니다. 기존 별칭이나 실제 경로를 말해 주세요."
+      confirm.alias_overwrite: "'{alias}'는 현재 {old}입니다. {target}(으)로 바꿀까요? (응/아니)"
+      persona.nyang_on: "냥체 다시 켰다냥!"
+      persona.nyang_off: "냥체를 껐습니다."
+      persona.emoji_on: "이모지를 켰습니다."
+      persona.emoji_off: "이모지를 껐습니다."
+      persona.profile: "말투를 '{profile}'(으)로 바꿨습니다."
+      persona.profile_unknown: "없는 말투입니다. 선택 가능: {profiles}"
+      wake.required_on: "이제 \"존냥아\"로 시작해야 대답합니다."
+      wake.required_off: "이제 호출어 없이도 대답합니다."
+      chat.greet: "안녕하세요."
+      chat.thanks: "천만에요."
+      chat.meow: "(고양이 흉내는 냥체를 켜야 합니다)"
