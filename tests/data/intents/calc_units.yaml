@@ -1,0 +1,15 @@
+- {text: "40의 15%는?", intent: calc.eval, tags: [정상]}
+- {text: "3만 2천원 4명이서 나눠", intent: calc.eval, tags: [정상, 더치페이]}
+- {text: "5만원 3명이서 엔빵", intent: calc.eval, tags: [정상, 더치페이]}
+- {text: "12 곱하기 7", intent: calc.eval, tags: [정상]}
+- {text: "3+4*2", intent: calc.eval, tags: [정상]}
+- {text: "100 나누기 8은 얼마야", intent: calc.eval, tags: [어미변형]}
+- {text: "5만원에서 20% 할인", intent: calc.eval, tags: [정상]}
+- {text: "삼십 더하기 십오", intent: calc.eval, tags: [한글수사]}
+- {text: "2의 제곱 계산해줘", intent: calc.eval, tags: [정상]}
+- {text: "5평은 몇 제곱미터야", intent: units.convert, tags: [정상]}
+- {text: "10마일을 킬로미터로 바꿔줘", intent: units.convert, tags: [정상]}
+- {text: "화씨 100도는 섭씨로", intent: units.convert, tags: [정상]}
+- {text: "3파운드는 몇 킬로", intent: units.convert, tags: [정상, 킬로모호]}
+- {text: "180cm는 몇 피트야", intent: units.convert, tags: [정상]}
+- {text: "2리터는 몇 갤런", intent: units.convert, tags: [정상]}

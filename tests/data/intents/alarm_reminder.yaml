@@ -1,0 +1,36 @@
+# 기준 시각 2026-10-20(화) 14:00
+- {text: "내일 아침 7시 알람 맞춰줘", intent: alarm.set, slots: {at: "2026-10-21T07:00"}, tags: [정상]}
+- {text: "7시에 깨워줘", intent: alarm.set, slots: {at: "2026-10-20T19:00"}, tags: [정상]}
+- {text: "30분 뒤에 깨워줘", intent: alarm.set, slots: {at: "2026-10-20T14:30"}, tags: [정상]}
+- {text: "알람 오후 5시", intent: alarm.set, slots: {at: "2026-10-20T17:00"}, tags: [정상]}
+- {text: "다음주 화요일 오전 6시 반 알람", intent: alarm.set, slots: {at: "2026-10-27T06:30"}, tags: [정상]}
+- {text: "낼 새벽 5시에 모닝콜", intent: alarm.set, slots: {at: "2026-10-21T05:00"}, tags: [정상]}
+- {text: "알렴 7시", intent: alarm.set, tags: [오타]}
+- {text: "내일 일곱 시에 알람 좀 걸어줄래", intent: alarm.set, slots: {at: "2026-10-21T07:00"}, tags: [어미변형, 한글수사]}
+- {text: "알람 맞춰", expect: ask_slot, intent: alarm.set, tags: [슬롯누락]}
+- {text: "매일 7시 알람", expect: time_error, intent: alarm.set, tags: [한계]}
+- {text: "오늘 1시 알람", expect: time_error, intent: alarm.set, tags: [한계]}
+- {text: "알람 맞추지 마", expect: negated, tags: [부정]}
+- {text: "알람 뭐 있어", intent: alarm.list, tags: [정상]}
+- {text: "알람 꺼줘", intent: alarm.cancel, tags: [정상]}
+- {text: "1번 알람 꺼", intent: alarm.cancel, slots: {index: 1}, tags: [정상]}
+- {text: "알람 다 꺼줘", intent: alarm.clear, tags: [정상]}
+- {text: "알람 전부 삭제해", intent: alarm.clear, tags: [정상]}
+
+- {text: "내일 오후 3시에 병원 가라고 알려줘", intent: reminder.set, slots: {at: "2026-10-21T15:00", message: "병원 가기"}, tags: [정상]}
+- {text: "10분 뒤에 빨래 꺼내라고 알려줘", intent: reminder.set, slots: {at: "2026-10-20T14:10", message: "빨래 꺼내기"}, tags: [정상]}
+- {text: "저녁 8시에 약 먹으라고 말해줘", intent: reminder.set, slots: {at: "2026-10-20T20:00", message: "약 먹기"}, tags: [정상]}
+- {text: "금요일에 보고서 제출 리마인더 등록", intent: reminder.set, slots: {at: "2026-10-23T09:00", message: "보고서 제출"}, tags: [정상]}
+- {text: "25일에 카드값 내는 거 잊지 않게 알려줘", intent: reminder.set, slots: {at: "2026-10-25T09:00", message: "카드값 내는"}, tags: [정상]}
+- {text: "한 시간 뒤에 엄마한테 전화하라고 알려줄래?", intent: reminder.set, slots: {at: "2026-10-20T15:00", message: "엄마한테 전화하기"}, tags: [어미변형]}
+- {text: "리마인더 등록해줘", expect: ask_slot, intent: reminder.set, tags: [슬롯누락]}
+- {text: "이따가 알려줘", expect: time_error, intent: reminder.set, tags: [한계]}
+- {text: "잊지 말라고 알려줘", expect: fallback, tags: [부정아님]}
+- {text: "리마인더 뭐 있어", intent: reminder.list, tags: [정상]}
+- {text: "리마인더 보여줘", intent: reminder.list, tags: [정상]}
+- {text: "병원 리마인더 취소", intent: reminder.cancel, tags: [정상]}
+- {text: "2번 리마인더 지워", intent: reminder.cancel, slots: {index: 2}, tags: [정상]}
+- {text: "리마인더 전부 지워", intent: reminder.clear, tags: [정상]}
+- {text: "알럼 7시", intent: alarm.set, tags: [오타]}
+- {text: "내일 7시 알람 맞쳐줘", intent: alarm.set, slots: {at: "2026-10-21T07:00"}, tags: [오타]}
+- {text: "리마인다 뭐 있어", intent: reminder.list, tags: [오타]}

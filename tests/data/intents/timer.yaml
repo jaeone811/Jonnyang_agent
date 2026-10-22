@@ -1,0 +1,28 @@
+# 기준 시각 2026-10-20(화) 14:00
+- {text: "존냥아 3분 타이머 맞춰줘", intent: timer.set, slots: {duration_sec: 180}, tags: [정상, 호출어]}
+- {text: "타이머 5분", intent: timer.set, slots: {duration_sec: 300}, tags: [정상]}
+- {text: "라면 타이머 4분", intent: timer.set, slots: {duration_sec: 240, label: 라면}, tags: [정상]}
+- {text: "1시간 반 타이머", intent: timer.set, slots: {duration_sec: 5400}, tags: [정상]}
+- {text: "10초 타이머 시작", intent: timer.set, slots: {duration_sec: 10}, tags: [정상]}
+- {text: "1시간 30분 타이머 설정해", intent: timer.set, slots: {duration_sec: 5400}, tags: [정상]}
+- {text: "타이멀 3분", intent: timer.set, slots: {duration_sec: 180}, tags: [오타]}
+- {text: "타이머 3뿐", expect: clarify, intent: timer.set, tags: [오타, 슬롯누락]}
+- {text: "삼 분 타이머 좀 맞춰 줄래?", intent: timer.set, slots: {duration_sec: 180}, tags: [어미변형, 한글수사]}
+- {text: "타이머 삼십 분만 맞춰주세요", intent: timer.set, slots: {duration_sec: 1800}, tags: [어미변형, 한글수사]}
+- {text: "한 시간짜리 타이머 켜 봐", intent: timer.set, slots: {duration_sec: 3600}, tags: [어미변형, 한글수사]}
+- {text: "5분 타이머 맞춰 주라", intent: timer.set, tags: [어미변형]}
+- {text: "타이머 맞추지 마", expect: negated, tags: [부정]}
+- {text: "타이머 맞추지 말아줘", expect: negated, tags: [부정]}
+- {text: "3분 타이머 안 맞춰도 돼", expect: negated, tags: [부정]}
+- {text: "타이머 맞춰줘", expect: ask_slot, intent: timer.set, tags: [슬롯누락]}
+- {text: "타이머", expect: clarify, intent: timer.set, tags: [슬롯누락]}
+- {text: "타이머 얼마나 남았어", intent: timer.list, tags: [정상]}
+- {text: "타이머 보여줘", intent: timer.list, tags: [정상]}
+- {text: "남은 타이머 몇 개야", intent: timer.list, tags: [어미변형]}
+- {text: "타이머 취소해", intent: timer.cancel, tags: [정상]}
+- {text: "2번 타이머 꺼", intent: timer.cancel, slots: {index: 2}, tags: [정상]}
+- {text: "타이머 그만", intent: timer.cancel, tags: [어미변형]}
+- {text: "3분 타이머 지워줘", intent: timer.cancel, slots: {duration_sec: 180}, tags: [정상]}
+- {text: "타이머 전부 꺼", intent: timer.clear, tags: [정상]}
+- {text: "타이머 다 취소해줘", intent: timer.clear, tags: [정상]}
+- {text: "모든 타이머 삭제", intent: timer.clear, tags: [어미변형]}

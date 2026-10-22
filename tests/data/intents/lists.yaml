@@ -1,0 +1,19 @@
+- {text: "쇼핑 목록에 우유랑 계란 추가해", intent: list.add, slots: {list: 쇼핑, items: [우유, 계란]}, tags: [정상]}
+- {text: "쇼핑 목록에 우유랑 계란이랑 사과 추가해", intent: list.add, slots: {items: [우유, 계란, 사과]}, tags: [정상]}
+- {text: "장보기 목록에 두부 넣어줘", intent: list.add, slots: {list: 쇼핑, items: [두부]}, tags: [정상]}
+- {text: "할 일 목록에 보고서 쓰기 추가", intent: list.add, slots: {list: 할 일, items: [보고서 쓰기]}, tags: [정상]}
+- {text: "우유 추가해", intent: list.add, slots: {list: 쇼핑, items: [우유]}, tags: [정상]}
+- {text: "쇼핑 리스트에 사과, 바나나 넣어", intent: list.add, slots: {items: [사과, 바나나]}, tags: [정상]}
+- {text: "목록에 육개장 사발면 추가", intent: list.add, slots: {items: [육개장 사발면]}, tags: [한글수사오인방지]}
+- {text: "쇼핑 목록에 우유와 계란 좀 담아줄래", intent: list.add, slots: {items: [우유, 계란]}, tags: [어미변형]}
+- {text: "쇼핑 목록에 \"참치 캔 3개\" 추가", intent: list.add, slots: {items: [참치 캔 3개]}, tags: [따옴표]}
+- {text: "쇼핑 목록 보여줘", intent: list.show, slots: {list: 쇼핑}, tags: [정상]}
+- {text: "장보기 목록에 뭐 있어", intent: list.show, slots: {list: 쇼핑}, tags: [정상]}
+- {text: "할 일 목록 알려줘", intent: list.show, slots: {list: 할 일}, tags: [정상]}
+- {text: "목록 보여줘", intent: list.show, slots: {list: 쇼핑}, tags: [정상]}
+- {text: "쇼핑 목록에서 우유 빼줘", intent: list.remove, slots: {items: [우유]}, tags: [정상]}
+- {text: "쇼핑 목록에서 계란 지워", intent: list.remove, slots: {items: [계란]}, tags: [정상]}
+- {text: "쇼핑 목록 비워줘", intent: list.clear, tags: [정상]}
+- {text: "쇼핑 목록 전부 지워", intent: list.clear, tags: [정상]}
+- {text: "쇼핑 목록에 우유 추가하지 마", expect: negated, tags: [부정]}
+- {text: "쇼핑 몽록 보여줘", intent: list.show, tags: [오타]}

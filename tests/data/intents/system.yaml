@@ -1,0 +1,38 @@
+- {text: "볼륨 올려줘", intent: volume.up, tags: [정상]}
+- {text: "소리 좀 키워", intent: volume.up, tags: [정상]}
+- {text: "소리 20 키워", intent: volume.up, slots: {amount: 20}, tags: [정상]}
+- {text: "볼룸 올려", intent: volume.up, tags: [오타]}
+- {text: "볼륨 내려", intent: volume.down, tags: [정상]}
+- {text: "소리 좀 줄여줄래", intent: volume.down, tags: [어미변형]}
+- {text: "볼륨 조금만 낮춰", intent: volume.down, slots: {step: 5}, tags: [정상]}
+- {text: "볼륨 50으로 해줘", intent: volume.set, slots: {amount: 50}, tags: [정상]}
+- {text: "볼륨 최대로", intent: volume.set, slots: {amount: 100}, tags: [정상]}
+- {text: "음소거", intent: volume.mute, tags: [정상]}
+- {text: "소리 꺼", intent: volume.mute, tags: [정상]}
+- {text: "음소거 해제", intent: volume.unmute, tags: [정상]}
+- {text: "음소거 풀어줘", intent: volume.unmute, tags: [정상]}
+- {text: "소리 켜", intent: volume.unmute, tags: [정상]}
+- {text: "볼륨 몇이야", intent: volume.get, tags: [정상]}
+- {text: "볼륨 올리지 마", expect: negated, tags: [부정]}
+- {text: "끄지 말고 소리 줄여줘", intent: volume.down, tags: [제외]}
+
+- {text: "메모장 켜줘", intent: app.open, slots: {target: 메모장}, tags: [정상]}
+- {text: "계산기 실행", intent: app.open, slots: {target: 계산기}, tags: [정상]}
+- {text: "크롬 열어", intent: app.open, slots: {target: 크롬}, tags: [정상]}
+- {text: "작업 관리자 띄워줘", intent: app.open, slots: {target: 작업 관리자}, tags: [정상]}
+- {text: "다운로드 폴더 열어", intent: app.open, slots: {target: 다운로드}, tags: [정상]}
+- {text: "메모쟝 켜", intent: app.open, slots: {target: 메모장}, tags: [오타]}
+- {text: "메모장 켜지 마", expect: negated, tags: [부정]}
+
+- {text: "CPU 얼마나 써", intent: sys.cpu, tags: [정상]}
+- {text: "씨피유 사용률", intent: sys.cpu, tags: [정상]}
+- {text: "메모리 사용량 알려줘", intent: sys.memory, tags: [정상]}
+- {text: "램 얼마나 남았어", intent: sys.memory, tags: [정상]}
+- {text: "디스크 용량 얼마나 남았어", intent: sys.disk, tags: [정상]}
+- {text: "저장공간 확인", intent: sys.disk, tags: [정상]}
+- {text: "배터리 얼마나 남았어", intent: sys.battery, tags: [정상]}
+- {text: "배터리 몇 퍼야", intent: sys.battery, tags: [어미변형]}
+- {text: "밧데리 상태", intent: sys.battery, tags: [오타]}
+- {text: "시스템 상태 알려줘", intent: sys.overview, tags: [정상]}
+- {text: "컴퓨터 상태 어때", intent: sys.overview, tags: [어미변형]}
+- {text: "배터랴 얼마나 남았어", intent: sys.battery, tags: [오타]}

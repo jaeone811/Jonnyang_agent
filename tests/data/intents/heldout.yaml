@@ -1,0 +1,90 @@
+# 규칙을 고치기 전에 처음 보는 문장으로 측정했던 묶음. 지금은 회귀 방지용.
+# 1차: 46문장 중 43 통과(93%) → 수정 후 46/46. 2차: 35문장 중 34(97%), 비명령 10문장 오실행 0.
+- {text: "파스타 삶게 8분 재줘", intent: timer.set, slots: {duration_sec: 480}, tags: [held-out]}
+- {text: "타이머 2분만", intent: timer.set, tags: [held-out]}
+- {text: "4분 뒤에 알려줘", intent: reminder.set, tags: [held-out]}
+- {text: "타이머 몇 분 남았지", intent: timer.list, tags: [held-out]}
+- {text: "타이머 멈춰", intent: timer.cancel, tags: [held-out]}
+- {text: "돌아가는 타이머 싹 다 지워", intent: timer.clear, tags: [held-out]}
+- {text: "내일 6시 반에 깨워 줘", intent: alarm.set, tags: [held-out]}
+- {text: "모닝콜 7시로 맞춰", intent: alarm.set, tags: [held-out]}
+- {text: "알람 몇 개 있어", intent: alarm.list, tags: [held-out]}
+- {text: "알람 취소", intent: alarm.cancel, tags: [held-out]}
+- {text: "모레 오전 10시에 치과 예약 알려줘", intent: reminder.set, tags: [held-out]}
+- {text: "30분 있다가 물 마시라고 알려줘", intent: reminder.set, slots: {message: "물 마시기"}, tags: [held-out]}
+- {text: "오늘 저녁 9시에 쓰레기 버리라고 해줘", intent: reminder.set, tags: [held-out]}
+- {text: "등록된 알림 보여줘", intent: reminder.list, tags: [held-out]}
+- {text: "리마인더 다 삭제", intent: reminder.clear, tags: [held-out]}
+- {text: "장보기에 양파 추가", intent: list.add, tags: [held-out]}
+- {text: "할일 목록에 운동하기 넣어줘", intent: list.add, slots: {list: 할 일, items: [운동하기]}, tags: [held-out]}
+- {text: "쇼핑리스트 뭐 있지", intent: list.show, tags: [held-out]}
+- {text: "쇼핑 목록에서 양파 지워줘", intent: list.remove, tags: [held-out]}
+- {text: "할 일 목록 싹 비워", intent: list.clear, tags: [held-out]}
+- {text: "25000원 5명이서 나누면", intent: calc.eval, tags: [held-out]}
+- {text: "15 빼기 7", intent: calc.eval, tags: [held-out]}
+- {text: "1000의 3%", intent: calc.eval, tags: [held-out]}
+- {text: "7 x 8", intent: calc.eval, tags: [held-out]}
+- {text: "100킬로미터는 몇 마일", intent: units.convert, tags: [held-out]}
+- {text: "섭씨 30도는 화씨로 몇 도", intent: units.convert, tags: [held-out]}
+- {text: "1근은 몇 그램", intent: units.convert, tags: [held-out]}
+- {text: "볼륨 좀 높여줘", intent: volume.up, tags: [held-out]}
+- {text: "소리 너무 커 줄여", intent: volume.down, tags: [held-out]}
+- {text: "볼륨 30", intent: volume.set, tags: [held-out]}
+- {text: "음소거 해줘", intent: volume.mute, tags: [held-out]}
+- {text: "소리 다시 켜줘", intent: volume.unmute, tags: [held-out]}
+- {text: "그림판 실행해줘", intent: app.open, tags: [held-out]}
+- {text: "바탕화면 폴더 열어줘", intent: app.open, tags: [held-out]}
+- {text: "설정 열어", intent: app.open, tags: [held-out]}
+- {text: "cpu 사용량", intent: sys.cpu, tags: [held-out]}
+- {text: "메모리 얼마나 쓰고 있어", intent: sys.memory, tags: [held-out]}
+- {text: "c드라이브 용량", intent: sys.disk, tags: [held-out]}
+- {text: "충전 얼마나 됐어", intent: sys.battery, tags: [held-out]}
+- {text: "너 뭐 할 줄 알아", intent: meta.help, tags: [held-out]}
+- {text: "명령어 알려줘", intent: meta.help, tags: [held-out]}
+- {text: "방금 한 거 되돌려", intent: meta.undo, tags: [held-out]}
+- {text: "냥체 그만 써", intent: persona.nyang, slots: {enabled: false}, tags: [held-out]}
+- {text: "말투 기본으로", intent: persona.profile, tags: [held-out]}
+- {text: "반가워", intent: chat.greet, tags: [held-out]}
+- {text: "야옹", intent: chat.meow, tags: [held-out]}
+- {text: "계란 삶는 타이머 7분", intent: timer.set, tags: [held-out]}
+- {text: "20분짜리 타이머 하나", intent: timer.set, tags: [held-out]}
+- {text: "타이머 언제 끝나", intent: timer.list, tags: [held-out]}
+- {text: "방금 맞춘 타이머 꺼줘", intent: timer.cancel, tags: [held-out]}
+- {text: "금요일 아침 8시 알람", intent: alarm.set, slots: {at: "2026-10-23T08:00"}, tags: [held-out]}
+- {text: "내일 다섯 시에 깨워", intent: alarm.set, tags: [held-out]}
+- {text: "알람 목록", intent: alarm.list, tags: [held-out]}
+- {text: "알람 전부 해제", intent: alarm.clear, tags: [held-out]}
+- {text: "내일 점심에 은행 가라고 알려줘", intent: reminder.set, slots: {at: "2026-10-21T12:00", message: "은행 가기"}, tags: [held-out]}
+- {text: "일요일에 분리수거 리마인더", intent: reminder.set, tags: [held-out]}
+- {text: "한 시간 후에 회의 들어가라고 알려줘", intent: reminder.set, tags: [held-out]}
+- {text: "내 리마인더 목록", intent: reminder.list, tags: [held-out]}
+- {text: "쇼핑 목록에 휴지 추가 좀", intent: list.add, tags: [held-out]}
+- {text: "장보기 리스트에 라면이랑 김치 넣어", intent: list.add, slots: {items: [라면, 김치]}, tags: [held-out]}
+- {text: "쇼핑 목록 확인", intent: list.show, tags: [held-out]}
+- {text: "장보기 목록에서 김치 빼", intent: list.remove, tags: [held-out]}
+- {text: "32000 나누기 4", intent: calc.eval, tags: [held-out]}
+- {text: "2만원의 10%", intent: calc.eval, tags: [held-out]}
+- {text: "6명이서 9만원 나눠", intent: calc.eval, tags: [held-out]}
+- {text: "15% 할인하면 3만원은 얼마", intent: calc.eval, tags: [held-out]}
+- {text: "10킬로그램은 몇 파운드", intent: units.convert, tags: [held-out]}
+- {text: "100제곱미터는 몇 평", intent: units.convert, tags: [held-out]}
+- {text: "볼륨 크게", intent: volume.up, tags: [held-out]}
+- {text: "소리 작게 해줘", intent: volume.down, tags: [held-out]}
+- {text: "볼륨 80으로 맞춰", intent: volume.set, tags: [held-out]}
+- {text: "지금 소리 몇이야", intent: volume.get, tags: [held-out]}
+- {text: "탐색기 열어줘", intent: app.open, tags: [held-out]}
+- {text: "문서 폴더 열어", intent: app.open, tags: [held-out]}
+- {text: "램 사용률", intent: sys.memory, tags: [held-out]}
+- {text: "디스크 얼마나 찼어", intent: sys.disk, tags: [held-out]}
+- {text: "배터리 상태 알려줘", intent: sys.battery, tags: [held-out]}
+- {text: "도와줘", intent: meta.help, tags: [held-out]}
+- {text: "이모지 빼줘", intent: persona.emoji, slots: {enabled: false}, tags: [held-out]}
+- {text: "디시 말투로 바꿔줘", intent: persona.profile, slots: {profile: dc}, tags: [held-out]}
+- {text: "고맙다", intent: chat.thanks, tags: [held-out]}
+# 실행되면 안 되는 문장
+- {text: "나 너무 피곤해", expect: fallback, tags: [held-out, 무관]}
+- {text: "어제 영화 봤어", expect: fallback, tags: [held-out, 무관]}
+- {text: "시간이 너무 빨리 간다", expect: fallback, tags: [held-out, 무관]}
+- {text: "볼륨 건드리지 마", expect: negated, tags: [held-out, 부정]}
+- {text: "알람 끄지 마", expect: negated, tags: [held-out, 부정]}
+- {text: "목록 지우지 마", expect: negated, tags: [held-out, 부정]}

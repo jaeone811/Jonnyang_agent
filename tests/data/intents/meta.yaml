@@ -1,0 +1,27 @@
+- {text: "뭐 할 수 있어?", intent: meta.help, tags: [정상]}
+- {text: "도움말", intent: meta.help, tags: [정상]}
+- {text: "너 뭐 할 줄 수 있어", intent: meta.help, tags: [어미변형]}
+- {text: "되돌려줘", intent: meta.undo, tags: [정상]}
+- {text: "방금 거 취소해", intent: meta.undo, tags: [정상]}
+- {text: "아까 한 거 원래대로 해줘", intent: meta.undo, tags: [어미변형]}
+- {text: "실행 취소", intent: meta.undo, tags: [정상]}
+- {text: "메모장을 노트라고 불러", intent: meta.alias, slots: {alias: 노트, target: 메모장}, tags: [정상]}
+- {text: "노트를 메모장 별칭으로 등록해", intent: meta.alias, slots: {alias: 노트, target: 메모장}, tags: [정상]}
+- {text: "냥체 꺼", intent: persona.nyang, slots: {enabled: false}, tags: [정상]}
+- {text: "냥체 다시 켜줘", intent: persona.nyang, slots: {enabled: true}, tags: [정상]}
+- {text: "이모지 꺼", intent: persona.emoji, slots: {enabled: false}, tags: [정상]}
+- {text: "이모티콘 켜", intent: persona.emoji, slots: {enabled: true}, tags: [정상]}
+- {text: "말투 시크하게 해줘", intent: persona.profile, slots: {profile: chic}, tags: [정상]}
+- {text: "말투 순하게", intent: persona.profile, slots: {profile: soft}, tags: [정상]}
+- {text: "호출어 켜", intent: wake.required, slots: {enabled: true}, tags: [정상]}
+- {text: "호출어 없이 할래", intent: wake.required, slots: {enabled: false}, tags: [정상]}
+- {text: "안녕", intent: chat.greet, tags: [잡담]}
+- {text: "고마워", intent: chat.thanks, tags: [잡담]}
+- {text: "심심해", intent: chat.meow, tags: [잡담]}
+- {text: "츄르 줄까", intent: chat.meow, tags: [잡담]}
+- {text: "존냥아", expect: wake, tags: [호출어]}
+- {text: "배고프다", expect: fallback, tags: [무관]}
+- {text: "오늘 기분 별로야", expect: fallback, tags: [무관]}
+- {text: "ㅁㄴㅇㄹ", expect: fallback, tags: [무관]}
+- {text: "타이머 말고 내일 7시 알람", intent: alarm.set, slots: {at: "2026-10-21T07:00"}, tags: [제외]}
+- {text: "타이머 말고", expect: fallback, tags: [제외]}

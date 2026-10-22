@@ -1,0 +1,55 @@
+# now: 2026-10-20(화) 14:00. at은 분 단위 ISO, duration은 초.
+- {text: "10분 뒤", at: "2026-10-20T14:10", duration: 600, relative: true}
+- {text: "삼십 분 뒤에 알려줘", at: "2026-10-20T14:30"}
+- {text: "한 시간 반 뒤", at: "2026-10-20T15:30"}
+- {text: "반 시간 뒤", at: "2026-10-20T14:30"}
+- {text: "3분 타이머", duration: 180, relative: false}
+- {text: "1시간 30분", duration: 5400}
+- {text: "2분 반", duration: 150}
+- {text: "이틀 뒤", at: "2026-10-22T14:00"}
+- {text: "일주일 뒤", at: "2026-10-27T14:00"}
+- {text: "삼일 뒤", at: "2026-10-23T14:00"}
+- {text: "2달 뒤", at: "2026-12-20T14:00"}
+- {text: "내일 오후 3시", at: "2026-10-21T15:00"}
+- {text: "내일 3시", at: "2026-10-21T15:00", assumed: [pm]}
+- {text: "내일 9시", at: "2026-10-21T09:00", assumed: [am]}
+- {text: "모레 아침", at: "2026-10-22T08:00", assumed: [period_default]}
+- {text: "내일모레 저녁 7시", at: "2026-10-22T19:00"}
+- {text: "다음주 화요일", at: "2026-10-27T09:00", assumed: [default_time]}
+- {text: "다음주 화요일 오후 2시", at: "2026-10-27T14:00"}
+- {text: "다다음주 월요일 10시", at: "2026-11-02T10:00"}
+- {text: "화요일", at: "2026-10-27T09:00"}
+- {text: "금요일 저녁", at: "2026-10-23T19:00"}
+- {text: "이번주 금요일 3시", at: "2026-10-23T15:00"}
+- {text: "이번주 월요일", error: past_date}
+- {text: "주말", at: "2026-10-24T09:00"}
+- {text: "다음주 주말", at: "2026-10-31T09:00"}
+- {text: "3시", at: "2026-10-20T15:00", assumed: [nearest]}
+- {text: "1시", at: "2026-10-21T01:00"}
+- {text: "12시", at: "2026-10-21T00:00"}
+- {text: "오늘 1시", error: past_today}
+- {text: "오후 3시 반", at: "2026-10-20T15:30"}
+- {text: "3시 15분", at: "2026-10-20T15:15"}
+- {text: "15:30", at: "2026-10-20T15:30"}
+- {text: "밤 12시", at: "2026-10-21T00:00"}
+- {text: "오늘 밤 1시", at: "2026-10-21T01:00"}
+- {text: "자정", at: "2026-10-21T00:00"}
+- {text: "정오", at: "2026-10-21T12:00"}
+- {text: "아침 7시", at: "2026-10-21T07:00", assumed: [rolled_tomorrow]}
+- {text: "저녁에", at: "2026-10-20T19:00"}
+- {text: "25일", at: "2026-10-25T09:00"}
+- {text: "10일", at: "2026-11-10T09:00", assumed: [next_month, default_time]}
+- {text: "10월 25일 오후 6시", at: "2026-10-25T18:00"}
+- {text: "10월 1일", at: "2027-10-01T09:00"}
+- {text: "2026년 10월 1일", error: past_date}
+- {text: "다음달 5일", at: "2026-11-05T09:00"}
+- {text: "다음달 31일", error: invalid}
+- {text: "25시", error: invalid}
+- {text: "매일 7시", error: recurring}
+- {text: "평일마다 9시", error: recurring}
+- {text: "이따가", error: vague}
+- {text: "3시에서 5시", error: multiple}
+- {text: "내일 화요일", error: multiple}
+- {text: "볼륨 낮춰", none: true}
+- {text: "밤새 일했어", none: true}
+- {text: "3시간", duration: 10800}
