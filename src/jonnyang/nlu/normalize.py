@@ -47,13 +47,22 @@ class Lexicon:
         return set(last)
 
 
+def _model_path() -> str | None:
+    """모델 폴더를 직접 알려준다. exe로 묶였을 때도 묶인 kiwipiepy_model 폴더를 확실히 찾게."""
+    try:
+        import kiwipiepy_model
+    except ImportError:
+        return None
+    return kiwipiepy_model.get_model_path()
+
+
 class Analyzer:
     """Kiwi 로딩이 몇 초 걸리므로 프로그램 전체에서 하나만 만든다."""
 
     def __init__(self, lexicon: Lexicon, extra_words: Iterable[str] = ()):
         from kiwipiepy import Kiwi
 
-        self.kiwi = Kiwi()
+        self.kiwi = Kiwi(model_path=_model_path())
         self.lexicon = lexicon
         for word, tag in lexicon.user_words:
             self.kiwi.add_user_word(word, tag, 0)

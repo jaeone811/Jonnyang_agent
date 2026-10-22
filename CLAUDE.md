@@ -33,6 +33,11 @@ Windows 10/11용 규칙 기반 개인 비서 에이전트. 고양이 캐릭터. 
 - 말풍선 본문은 PlainText로만 표시한다(목록 항목·외부 텍스트가 HTML로 해석되면 안 됨).
 - 확인 질문과 알림 말풍선은 사용자가 대답하거나 클릭할 때까지 사라지면 안 된다. 핵심 정보는 잘리지 않게 스크롤로 보여준다.
 - 펫은 한 번에 하나만 실행한다(`data/jonnyang.lock`).
+
+## 배포 (exe)
+- PyInstaller 폴더형(onedir) 빌드: `packaging/jonnyang.spec`. GitHub Actions(`.github/workflows/windows.yml`)가 Windows 러너에서 테스트 → 빌드 → `--selftest` → Artifact 업로드, `v*` 태그면 Release 첨부.
+- exe로 돌 때 설정은 exe 옆 `config/`(없으면 묶인 기본값), 데이터는 `%LOCALAPPDATA%\Jonnyang`. 경로 계산은 `core/config.py`에서만 한다.
+- kiwi 모델 경로는 `kiwipiepy_model.get_model_path()`로 직접 넘긴다. 새 의존성을 넣으면 exe에서도 되는지 `--selftest`로 확인한다.
 - YAML 키에 `yes`/`no`/`on`/`off`를 그대로 쓰지 않는다(불리언이 됨). `tests/test_persona.py`가 검사한다.
 
 ## 캐릭터

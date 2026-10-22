@@ -10,7 +10,21 @@ Windows 10/11용 규칙 기반 한국어 개인 비서. 고양이 캐릭터. LLM
 
 표정: ![](docs/images/pet-poses.png)
 
-## 설치 (Windows)
+## 다운로드해서 바로 실행 (Python 설치 필요 없음)
+
+1. GitHub 저장소의 **Releases**에서 `Jonnyang-버전-win64.zip`을 받는다.
+   - 아직 릴리스가 없으면 **Actions** 탭 → 최신 "Windows test & build" 실행 → 아래 **Artifacts**의 `Jonnyang-…-win64`를 받는다 (GitHub 로그인 필요, 30일 보관).
+2. 압축을 풀고 `Jonnyang\Jonnyang.exe`를 더블클릭. `_internal` 폴더는 exe 옆에 그대로 둬야 한다.
+3. "Windows의 PC 보호" 파란 창이 뜨면 [추가 정보] → [실행] (코드 서명을 안 해서 뜨는 경고).
+
+- 설정: exe 옆 `config\*.yaml`을 메모장으로 고치고 다시 켜면 된다.
+- 내 데이터(목록·리마인더·별칭·설정): `%LOCALAPPDATA%\Jonnyang\jonnyang.db`. 새 버전은 `Jonnyang` 폴더만 갈아끼우면 데이터가 남는다.
+- 오류가 나면 `%LOCALAPPDATA%\Jonnyang\crash.log`에 내용이 남고 대화상자로도 뜬다.
+- 크기가 큰 편이다: 형태소 분석 모델만 약 105MB.
+
+새 릴리스 만들기(개발자용): `git tag v0.2.0 && git push origin v0.2.0` → Windows 러너가 테스트·빌드·exe 자체 점검 후 Release에 zip을 올린다 (`.github/workflows/windows.yml`).
+
+## 소스로 설치 (Windows, 개발용)
 
 1. **64비트 Python 3.12 또는 3.13** 설치 (pycaw는 3.10 이상 필요, kiwipiepy Windows 휠은 x86-64용만 있음).
    - `python`을 치면 Microsoft Store가 뜨면: 설정 → 앱 → 앱 실행 별칭에서 python 끄거나 `py -3.12` 사용.
@@ -99,6 +113,15 @@ WSL에서는 볼륨 조절(pycaw)이 안 된다. 개발은 아무 OS에서 해�
 .\.venv\Scripts\python.exe -m pytest -m windows # 실제 볼륨 읽기·시스템 정보·한글 경로 kiwi 로딩 (읽기만 함)
 .\.venv\Scripts\python.exe tools\eval_nlu.py --sweep   # 의도 정확도 리포트 + 임계값 스윕
 .\.venv\Scripts\python.exe tools\render_pet.py docs\images   # 펫 화면 스크린샷 다시 뽑기
+```
+
+exe 직접 빌드 (Windows에서):
+```powershell
+.\.venv\Scripts\python.exe -m pip install pyinstaller==6.22.3 pillow
+.\.venv\Scripts\python.exe tools\make_icon.py build\jonnyang.ico
+.\.venv\Scripts\python.exe -m PyInstaller --noconfirm --clean packaging\jonnyang.spec
+.\.venv\Scripts\python.exe tools\package.py dist\Jonnyang       # → dist\Jonnyang-버전-win64.zip
+dist\Jonnyang-0.1.0-win64\Jonnyang\Jonnyang.exe --selftest selftest.txt   # 묶인 게 다 있는지 점검
 ```
 
 GUI 테스트(`tests/test_gui.py`)는 화면 없이(`QT_QPA_PLATFORM=offscreen`) 돈다.

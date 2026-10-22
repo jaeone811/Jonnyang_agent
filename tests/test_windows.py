@@ -14,7 +14,14 @@ def test_read_volume():
     from jonnyang.platform.system import WindowsVolume
 
     v = WindowsVolume()
-    level = v.get()
+    try:
+        level = v.get()
+    except OSError as exc:   # comtypes COMError는 OSError가 아님 → 아래에서 따로 처리
+        pytest.skip(f"오디오 장치 없음: {exc}")
+    except Exception as exc:
+        if type(exc).__name__ == "COMError":   # 오디오 장치가 없는 CI 러너
+            pytest.skip(f"오디오 장치 없음: {exc}")
+        raise
     assert 0 <= level <= 100
     assert isinstance(v.is_muted(), bool)
 

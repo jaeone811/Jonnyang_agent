@@ -309,4 +309,9 @@ dev = ["pytest", "ruff"]
 - 테스트: offscreen GUI 테스트 9개(응답→상태 카운트다운, 확인 버튼, 되묻기 번호, 다른 스레드 알림, 졸기, 입력창 토글, 드래그 위치 저장, PlainText) + YAML 키 검사.
 - 실제 Windows에서 확인 안 한 것: 투명 창 + `setMask` 클릭 통과, 항상 위 도구 창의 키보드 포커스, 컬러 이모지 표시, 트레이 알림, `jonnyang-pet.exe` 실행기.
 
+## 배포: 다운로드해서 바로 실행하는 exe (2026-10-22)
+- PyInstaller 6.22.3 폴더형 빌드. 한 파일 exe는 실행 때마다 200MB 넘게 임시 폴더에 풀어야 해서 느리고 백신 오탐이 잦아서 안 씀.
+- 이 컨테이너(Linux)에서는 Windows exe를 만들 수 없다(PyInstaller는 크로스 빌드 안 됨). 그래서 GitHub Actions windows-latest에서 빌드한다. 같은 spec으로 Linux 빌드를 만들어 `--selftest`(kiwi 모델, 설정, Qt 플러그인, 고양이 그리기)가 통과하는 것까지 확인했다.
+- 크기 줄이기: kiwipiepy 부가 모듈 때문에 딸려오던 numpy/scipy 제외(실행 중엔 안 불림을 확인), Qt 번역은 한국어만. Linux 빌드 기준 451MB → 376MB(zip 209MB → 184MB). 바닥은 kiwi 모델 105MB + kiwi 엔진 40MB.
+
 - 아직 실제 Windows에서 돌려보지 않은 부분: pycaw 볼륨 조작, `os.startfile` 앱/폴더 실행, `winsound` 알림음, 한글 사용자 경로에서 kiwi 로딩. `pytest -m windows`로 확인한다.

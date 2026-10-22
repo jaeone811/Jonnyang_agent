@@ -1,0 +1,77 @@
+name: Windows test & build
+
+# 브랜치에 push → 테스트 + exe 빌드 (Actions 탭의 Artifacts에서 zip 다운로드)
+# v로 시작하는 태그 push (예: v0.2.0) → 위 + GitHub Releases에 zip 첨부
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write   # 태그 빌드에서 Release를 만들 때 필요
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Tests (Windows 전용 테스트 포함)
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONUTF8: "1"
+        run: python -m pytest -q -rs
+
+  build:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: python -m pip install -e . pyinstaller==6.22.3 pillow
+      - name: Icon
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python tools/make_icon.py build/jonnyang.ico
+      - name: PyInstaller
+        run: python -m PyInstaller --noconfirm --clean packaging/jonnyang.spec
+      - name: Package
+        run: python tools/package.py dist/Jonnyang
+      - name: Selftest the packaged exe
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem dist -Recurse -Filter Jonnyang.exe | Where-Object { $_.FullName -like '*-win64*' } | Select-Object -First 1
+          $out = Join-Path $PWD 'selftest.txt'
+          $p = Start-Process -FilePath $exe.FullName -ArgumentList '--selftest', "`"$out`"" -Wait -PassThru
+          Get-Content $out
+          if ($p.ExitCode -ne 0) { throw "selftest failed ($($p.ExitCode))" }
+      - name: Find package
+        id: pkg
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem dist -Filter 'Jonnyang-*-win64.zip' | Select-Object -First 1
+          "zip=$($zip.FullName)" >> $env:GITHUB_OUTPUT
+          "name=$($zip.BaseName)" >> $env:GITHUB_OUTPUT
+          "folder=$($zip.FullName -replace '\.zip$','')" >> $env:GITHUB_OUTPUT
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.pkg.outputs.name }}
+          path: ${{ steps.pkg.outputs.folder }}
+          retention-days: 30
+      - name: GitHub Release (tag만)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: gh release create "${{ github.ref_name }}" "${{ steps.pkg.outputs.zip }}" --title "존냥이 ${{ github.ref_name }}" --notes "Windows 10/11 64비트. zip을 풀고 Jonnyang\Jonnyang.exe 실행. 자세한 건 안의 사용법.txt"
