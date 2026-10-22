@@ -81,6 +81,11 @@ class TimerSkill(Skill):
             self.ctx.scheduler.cancel(t.job)
 
     # ── Skill ──
+    def status(self, now: datetime) -> list[tuple[datetime, Result]]:
+        return [(t.end, Result("status.timer", {"label": t.label, "remaining": max(t.end - now, timedelta()),
+                                                "duration": t.duration}, core=("remaining",)))
+                for t in self._sorted()]
+
     def extract(self, intent: str, req) -> dict[str, Any]:
         slots: dict[str, Any] = {}
         if req.time.duration and req.time.error is None:

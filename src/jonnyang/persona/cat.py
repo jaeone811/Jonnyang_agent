@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import random
 import re
 import string
@@ -62,6 +63,22 @@ class Persona:
 
     def label(self, key: str) -> str:
         return str((self.data.get("labels") or {}).get(key, key))
+
+    def ui(self, key: str) -> str:
+        """GUI 문구 (입력창 안내, 메뉴 등)."""
+        return str((self.data.get("ui") or {}).get(key, key))
+
+    @property
+    def appearance(self) -> dict[str, Any]:
+        return dict(self.data.get("appearance") or {})
+
+    def pose_for(self, key: str, ok: bool = True) -> str:
+        """응답 키 → 고양이 표정. persona.yaml poses.rules에서 위부터 처음 맞는 것."""
+        spec = self.data.get("poses") or {}
+        for pattern, pose in spec.get("rules") or []:
+            if fnmatch.fnmatchcase(key, pattern):
+                return pose
+        return spec.get("default", "happy") if ok else spec.get("error", "confused")
 
     # ── 템플릿 ──
     def _chain(self) -> list[str]:

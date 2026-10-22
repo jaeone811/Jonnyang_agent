@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import TYPE_CHECKING, Any, Callable
 
 from jonnyang.nlu.matcher import Intent
@@ -52,6 +53,10 @@ class Skill:
 
     def undo(self, intent: str, payload: dict[str, Any]) -> Result:
         return Result("undo.unsupported", ok=False)
+
+    def status(self, now: datetime) -> list[tuple[datetime, Result]]:
+        """지금 진행 중인 일 (말풍선 표시용). (다음 이벤트 시각, 결과) 목록."""
+        return []
 
     def protected_words(self) -> set[str]:
         """이 스킬이 의미를 아는 단어. 다른 의도의 키워드로 오타 보정되지 않게 보호한다."""

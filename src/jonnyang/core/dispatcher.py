@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from jonnyang.core.context import AppContext
+from jonnyang.core.reply import Reply
 from jonnyang.nlu.matcher import Candidate, Intent, Matcher
 from jonnyang.nlu.pipeline import NLU, Request
 from jonnyang.nlu.preprocess import clean
@@ -105,19 +106,36 @@ class Dispatcher:
 
     # ── 실행 ──
     def handle(self, raw: str) -> list[str]:
+        """CLI용: 응답 문장만."""
+        return [r.text for r in self.respond(raw)]
+
+    def respond(self, raw: str) -> list[Reply]:
         now = self.ctx.clock()
-        if self.pending and now - self.pending.created > self.pending_ttl:
-            self.pending = None
+        self._expire(now)
         if self.pending:
             out = self._handle_pending(raw, now)
             if out is not None:
                 return out
         return self._run(self.interpret(raw, now), now)
 
-    def _say(self, r: Result | Confirm, now: datetime) -> list[str]:
-        return [self.ctx.persona.render(r, now)]
+    def _expire(self, now: datetime) -> None:
+        if self.pending and now - self.pending.created > self.pending_ttl:
+            self.pending = None
 
-    def _run(self, it: Interpretation, now: datetime) -> list[str]:
+    def _say(self, r: Result | Confirm, now: datetime, waiting: bool = False,
+             choices: list[tuple[str, str]] | None = None) -> list[Reply]:
+        p = self.ctx.persona
+        if isinstance(r, Confirm):
+            waiting = True
+            choices = choices or self._yes_no()
+        ok = r.ok if isinstance(r, Result) else True
+        return [Reply(p.render(r, now), r.key, ok, waiting, choices or [])]
+
+    def _yes_no(self) -> list[tuple[str, str]]:
+        # 버튼 글자는 persona에서, 보내는 말은 YES_RE/NO_RE가 확실히 알아듣는 고정 단어
+        return [(self.ctx.persona.ui("answer_yes"), "응"), (self.ctx.persona.ui("answer_no"), "아니")]
+
+    def _run(self, it: Interpretation, now: datetime) -> list[Reply]:
         p = self.ctx.persona
         if it.kind == "empty":
             return []
@@ -128,23 +146,28 @@ class Dispatcher:
         if it.kind == "negated":
             return self._say(Result("negated"), now)
         if it.kind == "time_error":
-            return self._say(Result(f"time.{it.req.time.error}"), now)
+            return self._say(Result(f"time.{it.req.time.error}", ok=False), now)
         if it.kind == "fallback":
             if it.req.excluded:
                 return self._say(Result("excluded_only", {"excluded": sorted(it.req.excluded)},
                                         core=("excluded",)), now)
-            return self._say(Result("fallback", {"examples": self._examples(3)}, core=("examples",)), now)
+            return self._say(Result("fallback", {"examples": self._examples(3)}, core=("examples",), ok=False), now)
         if it.kind == "clarify":
             self.pending = Pending("choice", now, options=it.options, raw=it.req.raw)
             items = [{"no": i, "label": p.label(f"intent.{o.name}")} for i, o in enumerate(it.options, 1)]
             key = "clarify" if len(items) > 1 else "clarify_one"
-            return self._say(Result(key, {"label": items[0]["label"]}, items=items, item_key="clarify.item"), now)
+            if len(items) > 1:
+                choices = [(i["label"], str(i["no"])) for i in items]
+            else:
+                choices = self._yes_no()
+            return self._say(Result(key, {"label": items[0]["label"]}, items=items, item_key="clarify.item"), now,
+                             waiting=True, choices=choices)
         if it.kind == "ask_slot":
             self.pending = Pending("slot", now, skill=it.intent.skill, intent=it.intent.name, raw=it.req.raw)
-            return self._say(Result(f"ask.{it.missing[0]}"), now)
+            return self._say(Result(f"ask.{it.missing[0]}"), now, waiting=True)
         return self._execute(it.intent, it.req, it.slots, now)
 
-    def _execute(self, intent: Intent, req: Request, slots: dict[str, Any], now: datetime) -> list[str]:
+    def _execute(self, intent: Intent, req: Request, slots: dict[str, Any], now: datetime) -> list[Reply]:
         skill = self.ctx.skills[intent.skill]
         out = skill.handle(intent.name, req, slots)
         if isinstance(out, Confirm):
@@ -152,7 +175,7 @@ class Dispatcher:
             return self._say(out, now)
         return self._finish(skill.name, intent.name, out, now)
 
-    def _finish(self, skill: str, intent: str, res: Result, now: datetime) -> list[str]:
+    def _finish(self, skill: str, intent: str, res: Result, now: datetime) -> list[Reply]:
         if isinstance(res, Confirm):   # 되돌리기처럼 확인을 한 번 더 요구하는 경우
             self.pending = Pending("confirm", now, confirm=res, skill=skill, intent=intent)
             return self._say(res, now)
@@ -160,7 +183,7 @@ class Dispatcher:
             self.ctx.history.record(skill, intent, res.undo_label, res.data, res.undo)
         return self._say(res, now)
 
-    def _handle_pending(self, raw: str, now: datetime) -> list[str] | None:
+    def _handle_pending(self, raw: str, now: datetime) -> list[Reply] | None:
         pend = self.pending
         answer = re.sub(r"[?!.~\s]+$", "", clean(raw)).lower()
         if pend.kind == "confirm":
@@ -205,13 +228,32 @@ class Dispatcher:
         pool = [ex for it in self.intents for ex in it.examples[:1] if not it.name.startswith(("chat.", "persona."))]
         return self.ctx.persona.rng.sample(pool, min(n, len(pool)))
 
+    # ── 진행 상태 (GUI 말풍선) ──
+    def status(self, now: datetime | None = None) -> tuple[str, Reply] | None:
+        """('waiting' | 'running', 문장). 대답 대기가 최우선, 그다음 가장 먼저 끝나는 일."""
+        now = now or self.ctx.clock()
+        self._expire(now)
+        if self.pending:
+            return "waiting", self._say(Result("status.waiting"), now)[0]
+        items = sorted((it for s in self.ctx.skills.values() for it in s.status(now)), key=lambda x: x[0])
+        if not items:
+            return None
+        reply = self._say(items[0][1], now)[0]
+        if len(items) > 1:
+            more = self.ctx.persona.render(Result("status.more", {"count": len(items) - 1}), now)
+            reply.text = f"{reply.text} {more}"
+        return "running", reply
+
     # ── 시작 ──
     def startup(self) -> list[str]:
+        return [r.text for r in self.startup_replies()]
+
+    def startup_replies(self) -> list[Reply]:
         now = self.ctx.clock()
         h = now.hour
         part = "morning" if 5 <= h < 11 else "afternoon" if h < 17 else "evening" if h < 22 else "night"
-        lines = self._say(Result(f"greet.{part}"), now)
+        replies = self._say(Result(f"greet.{part}"), now)
         for skill in self.ctx.skills.values():
             for r in skill.on_start():
-                lines += self._say(r, now)
-        return lines
+                replies += [Reply(rep.text, rep.key, rep.ok, alert=True) for rep in self._say(r, now)]
+        return replies

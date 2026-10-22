@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from jonnyang.core.storage import iso
@@ -14,6 +14,7 @@ from jonnyang.nlu.matcher import Intent
 from jonnyang.skills.base import Confirm, Result, Skill
 
 NO_RE = re.compile(r"(\d+)\s*번")
+STATUS_WINDOW = timedelta(hours=12)   # 말풍선에 "곧 할 일"로 보여줄 범위
 # 리마인더 내용에서 떼어낼 명령 꼬리
 TRAILER_RE = re.compile(
     r"\s*(?:좀\s*)?(?:나한테\s*|저한테\s*)?"
@@ -107,6 +108,15 @@ class _Scheduled(Skill):
             return []
         return [Result(f"{self.kind}.missed", {"count": len(missed)}, core=("count",), items=missed,
                        item_key=f"{self.kind}.missed_item")]
+
+    def status(self, now: datetime) -> list[tuple[datetime, Result]]:
+        out = []
+        for r in self._rows():
+            at = datetime.fromisoformat(r["at"])
+            if now < at <= now + STATUS_WINDOW:
+                out.append((at, Result(f"status.{self.kind}", {"at": at, "message": r["message"]},
+                                       core=("at",))))
+        return out
 
     def _list(self) -> Result:
         rows = self._rows()

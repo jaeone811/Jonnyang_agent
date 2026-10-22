@@ -25,6 +25,20 @@ def _debug(dispatcher, line: str) -> list[str]:
 
 
 def main() -> None:
+    """기본은 데스크톱 펫(GUI). `--cli`면 콘솔 채팅. PySide6가 없으면 콘솔로 실행한다."""
+    if "--cli" not in sys.argv[1:]:
+        try:
+            from jonnyang.gui.app import main as gui_main
+        except ImportError as exc:
+            from jonnyang.core.config import load_yaml
+            ui = load_yaml("persona.yaml").get("ui", {})
+            print(ui.get("no_gui", "PySide6 not installed"), f"({exc})")
+        else:
+            sys.exit(gui_main())
+    cli_main()
+
+
+def cli_main() -> None:
     console = Console()
     from jonnyang.core.config import load_yaml
 

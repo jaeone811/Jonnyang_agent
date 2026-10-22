@@ -99,3 +99,27 @@ def test_every_template_renders(profile):
         out = p.say(key, data, NOW, core=tuple(fields))
         for f in fields:
             assert f"<{f}>" in out, (profile, key, f)
+
+
+@pytest.mark.parametrize("name", ["persona.yaml", "settings.yaml", "aliases.yaml", "lexicon.yaml"])
+def test_yaml_keys_are_strings(name):
+    """YAML 1.1은 yes/no/on/off 키를 true/false로 읽는다. 그런 키가 섞이면 조용히 기능이 깨진다."""
+    def walk(node, path):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                assert isinstance(k, str), f"{name}: {path}의 키 {k!r}가 문자열이 아님 (따옴표로 감싸라)"
+                walk(v, f"{path}.{k}")
+        elif isinstance(node, list):
+            for i, v in enumerate(node):
+                walk(v, f"{path}[{i}]")
+    walk(load_yaml(name), name)
+
+
+def test_pose_rules():
+    p = persona()
+    assert p.pose_for("timer.done") == "alert"
+    assert p.pose_for("confirm.list_clear") == "ask"
+    assert p.pose_for("fallback", ok=False) == "confused"
+    assert p.pose_for("timer.set") == "happy"
+    assert p.pose_for("calc.zero", ok=False) == "confused"
+    assert p.ui("answer_yes") == "응"

@@ -25,6 +25,16 @@ Windows 10/11용 규칙 기반 개인 비서 에이전트. 고양이 캐릭터. 
 - 네트워크 호출은 `core/network.py` 한 곳으로만 한다 (타임아웃, 예외 처리, 캐시). 테스트에서는 가짜 응답으로 대체 가능해야 한다.
 - 스킬은 순수 결과 데이터만 반환하고, 말투는 `persona/`가 입힌다.
 
+## 데스크톱 펫 (GUI)
+- GUI는 `src/jonnyang/gui/`(PySide6)에만 둔다. `python -m jonnyang`은 펫, `--cli`는 콘솔. 두 화면 모두 같은 `Dispatcher`를 쓴다.
+- 고양이는 이미지 없이 `gui/painter.py`의 QPainter 도형으로 그린다. 색(`appearance`), 응답 키 → 표정 규칙(`poses`), 펫 문구(`ui`)는 `persona.yaml`에 둔다.
+- Qt 위젯은 GUI 스레드에서만 만진다. 스케줄러 스레드의 알림은 `ctx.reply_sink` → `Bridge.notified` Signal로 넘긴다. 형태소 사전 로딩은 별도 스레드에서 한다.
+- 볼륨(pycaw) 같은 COM 호출은 GUI 스레드에서 `dispatcher.respond()`를 통해서만 한다.
+- 말풍선 본문은 PlainText로만 표시한다(목록 항목·외부 텍스트가 HTML로 해석되면 안 됨).
+- 확인 질문과 알림 말풍선은 사용자가 대답하거나 클릭할 때까지 사라지면 안 된다. 핵심 정보는 잘리지 않게 스크롤로 보여준다.
+- 펫은 한 번에 하나만 실행한다(`data/jonnyang.lock`).
+- YAML 키에 `yes`/`no`/`on`/`off`를 그대로 쓰지 않는다(불리언이 됨). `tests/test_persona.py`가 검사한다.
+
 ## 캐릭터
 - 말투/템플릿은 `config/persona.yaml`에서 관리한다 (코드에 하드코딩 금지).
 - 숫자, 경로, 시간, 오류 원인 같은 핵심 정보는 말투 때문에 가려지거나 바뀌면 안 된다.

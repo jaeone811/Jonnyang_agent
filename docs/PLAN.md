@@ -301,4 +301,12 @@ dev = ["pytest", "ruff"]
   - 단위 변환 결과 온도 표기는 °C/°F.
   - 볼륨/앱/시스템 상태 스킬은 파일을 셋으로 나누지 않고 `skills/system.py` 안의 클래스 3개로 뒀다(OS 호출은 계획대로 `platform/` 뒤에 있음). 리마인더와 알람은 같은 테이블을 써서 `skills/reminder.py`에 같이 있다.
   - `core/dialog.py`는 따로 만들지 않고 대기 상태(Pending)를 `core/dispatcher.py` 안에 뒀다.
+## 1.5단계: 데스크톱 펫 GUI (2026-10-22)
+- 요청: CLI 대신 Codex Pets처럼 바탕화면 위에 떠 있는 고양이 캐릭터. 말풍선에 진행 상태, 간단한 입력창.
+- PySide6-Essentials 6.12(Qt 6, Windows 휠 cp310-abi3 x86-64 약 82MB). 테두리 없는 투명 창 + 항상 위 + 작업 표시줄에 안 뜨는 도구 창, `setMask`로 투명 부분 클릭 통과, 트레이 아이콘, `QLockFile` 단일 실행.
+- 말풍선 상태는 Codex Pets의 상태(작업 중 / 입력 필요 / 완료 / 막힘)를 따르고 알림 상태를 추가했다.
+- 백엔드 변경: `Dispatcher.respond()`가 `Reply`(문장, 키, 성공 여부, 대답 대기, 버튼, 알림)를 돌려준다. `handle()`은 CLI용으로 문장만. 스킬은 `status()`로 진행 중인 일을 알려준다.
+- 테스트: offscreen GUI 테스트 9개(응답→상태 카운트다운, 확인 버튼, 되묻기 번호, 다른 스레드 알림, 졸기, 입력창 토글, 드래그 위치 저장, PlainText) + YAML 키 검사.
+- 실제 Windows에서 확인 안 한 것: 투명 창 + `setMask` 클릭 통과, 항상 위 도구 창의 키보드 포커스, 컬러 이모지 표시, 트레이 알림, `jonnyang-pet.exe` 실행기.
+
 - 아직 실제 Windows에서 돌려보지 않은 부분: pycaw 볼륨 조작, `os.startfile` 앱/폴더 실행, `winsound` 알림음, 한글 사용자 경로에서 kiwi 로딩. `pytest -m windows`로 확인한다.

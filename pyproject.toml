@@ -12,6 +12,7 @@ dependencies = [
     "rapidfuzz>=3.14",
     "psutil>=7.0",
     "pyyaml>=6.0",
+    "PySide6-Essentials>=6.9",
     "pycaw>=20251023; sys_platform == 'win32'",
 ]
 
@@ -20,6 +21,10 @@ dev = ["pytest>=8", "ruff>=0.6"]
 
 [project.scripts]
 jonnyang = "jonnyang.main:main"
+
+# Windows에서 콘솔 창 없이 펫만 띄우는 실행 파일 (.venv\Scripts\jonnyang-pet.exe)
+[project.gui-scripts]
+jonnyang-pet = "jonnyang.gui.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

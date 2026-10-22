@@ -10,6 +10,7 @@ from typing import Callable
 from jonnyang.core.aliases import AliasBook
 from jonnyang.core.config import load_yaml
 from jonnyang.core.history import History
+from jonnyang.core.reply import Reply
 from jonnyang.core.scheduler import Scheduler
 from jonnyang.core.storage import Storage
 from jonnyang.nlu.normalize import Analyzer
@@ -33,6 +34,7 @@ class AppContext:
         self.aliases = AliasBook(storage, load_yaml("aliases.yaml", config_dir), clock)
         self.persona = Persona(load_yaml("persona.yaml", config_dir), storage.get_setting, rng)
         self.sink = sink or (lambda lines: None)
+        self.reply_sink: Callable[[list[Reply]], None] | None = None   # GUI용 (스케줄러 스레드에서 불림)
         self.skills: dict[str, Skill] = {}
         self.beep_gap = beep_gap
         for name in self.aliases.names():
@@ -45,7 +47,10 @@ class AppContext:
     def notify(self, results: list[Result], beeps: int = 0) -> None:
         """스케줄러 스레드에서 부르는 알림 출력."""
         now = self.clock()
-        self.sink([self.persona.render(r, now) for r in results])
+        replies = [Reply(self.persona.render(r, now), r.key, r.ok, alert=True) for r in results]
+        self.sink([r.text for r in replies])
+        if self.reply_sink:
+            self.reply_sink(replies)
         for i in range(beeps):
             try:
                 self.platform.beeper.beep()

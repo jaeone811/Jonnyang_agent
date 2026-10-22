@@ -107,6 +107,75 @@ labels:
   assumed.next_month: 이번 달은 지나서 다음 달로 잡음
   assumed.next_year: 올해는 지나서 내년으로 잡음
 
+# ───────────── 데스크톱 펫 (GUI) ─────────────
+# 고양이 색. 코드가 아니라 여기서 바꾼다.
+appearance:
+  body: "#F6B46B"        # 치즈냥 몸통
+  stripe: "#E08A3C"      # 이마 줄무늬, 꼬리 끝
+  belly: "#FFF4E3"       # 배, 주둥이
+  outline: "#8A5A36"     # 테두리
+  ear_inner: "#FFB8C6"
+  eye: "#3A2E2E"
+  blush: "#FF9AAE"
+  nose: "#F2789A"
+  bubble_bg: "#FFFDF8"
+  bubble_text: "#2B2622"
+  bubble_border: "#EADBC6"
+  state:                 # 말풍선 상태 점 색 (Codex 펫처럼: 작업 중 / 입력 필요 / 완료 / 문제 + 알림)
+    running: "#4C8BF5"
+    needs_input: "#F5A524"
+    ready: "#2BB673"
+    blocked: "#E5484D"
+    alert: "#FF7A45"
+
+# 응답 키 → 표정. 위에서부터 처음 맞는 규칙을 쓴다(* 와일드카드).
+# 표정: idle happy confused alert ask sleep think listen
+poses:
+  default: happy          # 규칙에 없고 성공
+  error: confused         # 규칙에 없고 실패
+  rules:
+    - ["*.done", alert]
+    - ["*.missed", alert]
+    - ["confirm.*", ask]
+    - ["clarify*", ask]
+    - ["ask.*", ask]
+    - ["excluded_only", ask]
+    - ["fallback", confused]
+    - ["time.*", confused]
+    - ["error.*", confused]
+    - ["negated", idle]
+    - ["cancelled", idle]
+    - ["undo.nothing", idle]
+    - ["wake", listen]
+    - ["status.waiting", ask]
+    - ["status.*", think]
+    - ["sys.*", think]
+
+# GUI 문구
+ui:
+  placeholder: "존냥이한테 말 걸기… (예: 3분 타이머)"
+  placeholder_waiting: "대답해달라냥 (응 / 아니)"
+  loading: "존냥이 깨어나는 중이다냥… 💤"
+  state.running: 작업 중
+  state.needs_input: 대답 기다리는 중
+  state.ready: 완료
+  state.blocked: 문제 생김
+  state.alert: 시간 됐다냥
+  answer_yes: 응          # 확인 버튼 글자 (주의: YAML에서 yes/no/on/off를 키로 쓰면 true/false가 된다)
+  answer_no: 아니
+  menu.show: 존냥이 보이기
+  menu.hide: 존냥이 숨기기
+  menu.input: 입력창 보이기 / 숨기기
+  menu.nyang_off: 냥체 끄기
+  menu.nyang_on: 냥체 켜기
+  menu.emoji_off: 이모지 끄기
+  menu.emoji_on: 이모지 켜기
+  menu.help: 뭐 할 수 있어?
+  menu.quit: 존냥이 재우기 (종료)
+  tray.tooltip: 존냥이
+  already_running: "존냥이가 이미 깨어 있다냥. 화면 구석이나 작업 표시줄 트레이를 확인해달라냥."
+  no_gui: "GUI 라이브러리(PySide6)가 없어서 콘솔로 실행한다냥. 설치: pip install PySide6-Essentials"
+
 profiles:
   # ───────────── 순한 냥체 (기본) ─────────────
   soft:
@@ -239,6 +308,14 @@ profiles:
       chat.greet: ["안녕이다냥! 😺", "왔냐옹?", "냥냥, 안녕!"]
       chat.thanks: ["별말씀을이다냥. 츄르면 된다냥 🐟", "고맙다니 기분 좋다냥 😻"]
       chat.meow: ["야옹~ 😺", "츄르 줄 거냥? 🐟", "심심하면 쓰다듬어 달라냥", "…귀찮다냥. 그래도 놀아줄게냥", "골골골골… 😽"]
+      chat.pet: ["골골골… 😽", "거기 좋다냥!", "헤헤, 간지럽다냥", "한 번 더 쓰다듬어도 된다냥"]
+      status.timer: "⏱ {label} {remaining} 남았다냥"
+      status.alarm: "⏰ {at} 알람 기다리는 중"
+      status.reminder: "📝 {at} '{message}' 알려줄 예정"
+      status.more: "(외 {count}개)"
+      status.waiting: "대답 기다리는 중이다냥"
+      status.idle: ["대기중이다냥 😺", "부르면 온다냥", "골골… 뭐 시킬 거 없냥?", "꼬리 손질 중이다냥", "창밖 구경 중이다냥"]
+      status.sleep: ["zzZ… 💤", "쿨쿨… 츄르 꿈 꾸는 중"]
 
   # ───────────── 시크한 냥 (soft에서 바꾸고 싶은 것만) ─────────────
   chic:
@@ -263,6 +340,8 @@ profiles:
       chat.greet: "…안녕."
       chat.thanks: "됐다냥. 츄르나 줘라냥."
       chat.meow: ["…야옹.", "귀찮다냥.", "츄르 있으면 생각해보겠다냥."]
+      chat.pet: ["…딱 거기까지만.", "흥. 나쁘지 않다냥."]
+      status.idle: ["…", "할 일 없으면 자겠다냥.", "뭐."]
 
   # ───────────── 디시 감성 예시 (원하는 대로 고쳐 써라) ─────────────
   dc:
@@ -283,6 +362,9 @@ profiles:
       list.add: "{list} 목록에 {items} 넣음 ({count}개)"
       calc.result: "{expr} = {value} ㅇㅇ"
       chat.meow: ["냥 ㅋㅋ", "츄르 내놔라 ㅡㅡ", "ㅈㄴ 귀찮음 ㅋㅋ"]
+      chat.pet: ["ㅗㅜㅑ 거기 ㅇㅇ", "골골 ㅋㅋ"]
+      status.idle: ["대기중 ㅇㅇ", "할거 없음? ㅋㅋ", "멍때리는 중"]
+      status.timer: "⏱ {label} {remaining} 남음 ㅇㅇ"
 
   # ───────────── 냥체 끔 (전체 키 필수) ─────────────
   plain:
@@ -405,3 +487,11 @@ profiles:
       chat.greet: "안녕하세요."
       chat.thanks: "천만에요."
       chat.meow: "(고양이 흉내는 냥체를 켜야 합니다)"
+      chat.pet: "(쓰다듬어 주셔서 감사합니다)"
+      status.timer: "{label} {remaining} 남음"
+      status.alarm: "{at} 알람 대기 중"
+      status.reminder: "{at} '{message}' 예정"
+      status.more: "(외 {count}개)"
+      status.waiting: "응답 대기 중"
+      status.idle: "대기 중"
+      status.sleep: "절전 중"
