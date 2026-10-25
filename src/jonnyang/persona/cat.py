@@ -72,6 +72,11 @@ class Persona:
     def appearance(self) -> dict[str, Any]:
         return dict(self.data.get("appearance") or {})
 
+    @property
+    def sprites(self) -> dict[str, Any]:
+        """그림 고양이 설정 (표정 → 애니메이션)."""
+        return dict(self.data.get("sprites") or {})
+
     def pose_for(self, key: str, ok: bool = True) -> str:
         """응답 키 → 고양이 표정. persona.yaml poses.rules에서 위부터 처음 맞는 것."""
         spec = self.data.get("poses") or {}

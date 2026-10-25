@@ -19,8 +19,8 @@ from PySide6.QtCore import QBuffer, QIODevice, QRectF  # noqa: E402
 from PySide6.QtGui import QColor, QImage, QPainter  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from jonnyang.core.config import load_yaml  # noqa: E402
-from jonnyang.gui.painter import CatFrame, CatPainter  # noqa: E402
+from jonnyang.core.config import load_yaml, sprite_dir  # noqa: E402
+from jonnyang.gui.sprite import make_painter  # noqa: E402
 
 
 def main(out: Path) -> None:
@@ -28,8 +28,8 @@ def main(out: Path) -> None:
     img = QImage(256, 256, QImage.Format.Format_ARGB32)
     img.fill(QColor(0, 0, 0, 0))
     p = QPainter(img)
-    CatPainter(load_yaml("persona.yaml").get("appearance")).paint(p, QRectF(-6, 4, 268, 248),
-                                                                   CatFrame(pose="happy", pose_t=5.0))
+    persona = load_yaml("persona.yaml")
+    make_painter(sprite_dir(), persona.get("sprites"), persona.get("appearance")).paint_icon(p, QRectF(0, 0, 256, 256))
     p.end()
     buf = QBuffer()
     buf.open(QIODevice.OpenModeFlag.WriteOnly)

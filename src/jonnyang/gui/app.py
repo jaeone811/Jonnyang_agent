@@ -41,9 +41,10 @@ def selftest(out_path: str) -> int:
         from PySide6.QtWidgets import QApplication
 
         from jonnyang.app import build_app
-        from jonnyang.core.config import config_dir, frozen, load_yaml
+        from jonnyang.core.config import config_dir, frozen, load_yaml, sprite_dir
         from jonnyang.core.storage import Storage
         from jonnyang.gui.painter import CatFrame, CatPainter
+        from jonnyang.gui.sprite import SpritePainter, SpriteSheet
         from jonnyang.platform.system import resolve_folder, system_platform
 
         app = QApplication.instance() or QApplication(sys.argv[:1])
@@ -73,6 +74,17 @@ def selftest(out_path: str) -> int:
         drawn = img.pixelColor(100, 80).alpha() > 0
         ok &= drawn
         lines.append(f"{'OK ' if drawn else 'BAD'} cat painted, qt platform={app.platformName()}")
+        sheet = SpriteSheet(sprite_dir())
+        missing = [n for n in sheet.counts if len(sheet.frames(n)) != sheet.counts[n]]
+        img.fill(QColor(0, 0, 0, 0))
+        p = QPainter(img)
+        SpritePainter(sheet, load_yaml("persona.yaml").get("sprites")).paint(p, QRectF(0, 0, 200, 180),
+                                                                             CatFrame(pose="idle", t=1.0))
+        p.end()
+        good = sheet.available and not missing and img.pixelColor(100, 100).alpha() > 0
+        ok &= good
+        lines.append(f"{'OK ' if good else 'BAD'} sprites {len(sheet.counts)} anims from {sprite_dir()}"
+                     + (f" missing={missing}" if missing else ""))
     except BaseException as exc:
         ok = False
         lines.append(traceback.format_exc())

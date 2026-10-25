@@ -36,6 +36,16 @@ def config_dir() -> Path:
     return REPO_ROOT / "config"
 
 
+def sprite_dir() -> Path:
+    """펫 그림(스프라이트) 폴더. exe 옆에 sprites/가 있으면 그걸 쓴다(그림 바꿔 끼우기)."""
+    if "JONNYANG_SPRITE_DIR" in os.environ:
+        return Path(os.environ["JONNYANG_SPRITE_DIR"])
+    if frozen():
+        beside = app_dir() / "sprites"
+        return beside if beside.is_dir() else Path(getattr(sys, "_MEIPASS", app_dir())) / "sprites"
+    return Path(__file__).resolve().parents[1] / "gui" / "sprites"
+
+
 def data_dir() -> Path:
     if "JONNYANG_DATA_DIR" in os.environ:
         return Path(os.environ["JONNYANG_DATA_DIR"])

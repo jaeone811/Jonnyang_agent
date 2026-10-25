@@ -102,6 +102,12 @@ class CatPainter:
         self._marks(p, f)
         p.restore()
 
+    def paint_icon(self, p: QPainter, rect: QRectF) -> None:
+        """트레이·exe 아이콘 (얼굴이 꽉 차게 조금 크게 그린다)."""
+        w, h = rect.width(), rect.height()
+        self.paint(p, QRectF(rect.x() - w * 0.125, rect.y() - h * 0.03, w * 1.25, h * 1.125),
+                   CatFrame(pose="happy", pose_t=5.0))
+
     def _motion(self, f: CatFrame) -> tuple[float, float]:
         if f.pose == "alert" and f.pose_t < 1.6:
             return abs(math.sin(f.pose_t * 9)) * 12 * (1 - f.pose_t / 1.6), math.sin(f.pose_t * 40) * 2

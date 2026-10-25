@@ -1,6 +1,7 @@
 """데스크톱 펫 창: 바탕화면 위에 떠 있는 고양이 + 말풍선 + 입력창.
 
-- 테두리 없는 투명 창, 항상 위. 고양이를 끌어서 옮긴다. 투명한 부분은 클릭이 뒤로 통과한다(setMask).
+- 테두리 없는 투명 창, 항상 위. 고양이를 끌어서 옮긴다(끄는 동안 둥실 뜬 자세). 투명한 부분은 클릭이 뒤로 통과한다.
+- 고양이는 그림(sprite.py, 스프라이트 애니메이션)으로 그리고, 그림 파일이 없으면 도형(painter.py)으로 그린다.
 - 말풍선: 평소엔 지금 하는 일(타이머 남은 시간, 다음 알람, 대답 대기)을 보여주고,
   명령을 처리하면 응답을 잠깐 보여준 뒤 다시 상태 표시로 돌아간다. 알림(타이머 끝 등)은 확인할 때까지 남는다.
 - 스케줄러 스레드의 알림은 Signal로 GUI 스레드에 넘긴다 (Qt 위젯은 GUI 스레드에서만 만진다).
@@ -47,14 +48,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from jonnyang.core.config import sprite_dir
 from jonnyang.core.reply import Reply
 from jonnyang.gui.painter import CatFrame, CatPainter
+from jonnyang.gui.sprite import SpritePainter, make_painter
 from jonnyang.persona.cat import Persona
 
 FONT_FAMILIES = ["Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", "Noto Sans KR", "Noto Sans CJK KR",
                  "WenQuanYi Zen Hei", "Segoe UI Emoji", "sans-serif"]
 WIN_W, WIN_H = 340, 480
-CAT_W, CAT_H = 170, 150
+CAT_W, CAT_H = 190, 170
 INPUT_H = 36
 BUBBLE_MAX_W = 310
 BUBBLE_MAX_TEXT_H = 220
@@ -92,7 +95,7 @@ class CatWidget(QWidget):
     menu_requested = Signal(QPoint)
     hovered = Signal()
 
-    def __init__(self, painter: CatPainter, parent: QWidget | None = None):
+    def __init__(self, painter: CatPainter | SpritePainter, parent: QWidget | None = None):
         super().__init__(parent)
         self.cat = painter
         self.setFixedSize(CAT_W, CAT_H)
@@ -109,6 +112,7 @@ class CatWidget(QWidget):
         self._press: QPoint | None = None
         self._win_origin: QPoint | None = None
         self._dragging = False
+        self._before_drag: tuple[str, float | None] | None = None
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update)
         self.timer.start(33)
@@ -177,6 +181,8 @@ class CatWidget(QWidget):
         if not self._dragging and delta.manhattanLength() > DRAG_THRESHOLD:
             self._dragging = True
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            self._before_drag = self.transient
+            self.flash("drag", None)          # 끌려가는 동안 둥실 떠 있는 자세
         if self._dragging:
             self.dragged.emit(self._win_origin + delta)
 
@@ -184,6 +190,8 @@ class CatWidget(QWidget):
         if e.button() != Qt.MouseButton.LeftButton or self._press is None:
             return
         if self._dragging:
+            self.transient = self._before_drag   # 끌기 전 표정(대답 기다리기 등)으로 돌아간다
+            self._before_drag = None
             self.drag_finished.emit()
         else:
             self.clicked.emit()
@@ -401,7 +409,7 @@ class PetWindow(QWidget):
         self.setFixedSize(WIN_W, WIN_H)
 
         colors = persona.appearance
-        self.cat = CatWidget(CatPainter(colors), self)
+        self.cat = CatWidget(make_painter(sprite_dir(), persona.sprites, colors), self)
         self.bubble = Bubble(colors, persona.ui, self)
         self.input = InputBar(colors, self)
         self.input.setPlaceholderText(persona.ui("placeholder"))
@@ -729,8 +737,7 @@ class PetWindow(QWidget):
         pix = QPixmap(64, 64)
         pix.fill(Qt.GlobalColor.transparent)
         p = QPainter(pix)
-        CatPainter(self.persona.appearance).paint(p, QRectF(-8, -2, 80, 72), CatFrame(pose="happy", t=0.0,
-                                                                                         pose_t=5.0))
+        self.cat.cat.paint_icon(p, QRectF(0, 0, 64, 64))
         p.end()
         tray = QSystemTrayIcon(QIcon(pix), self)
         tray.setToolTip(self.persona.ui("tray.tooltip"))

@@ -16,6 +16,7 @@ for pkg in ("kiwipiepy", "kiwipiepy_model"):     # 형태소 분석기 확장 �
     binaries += b
     hiddenimports += h
 datas.append((str(ROOT / "config"), "config"))   # exe 옆 config/가 없을 때 쓰는 기본값
+datas.append((str(ROOT / "src" / "jonnyang" / "gui" / "sprites"), "sprites"))   # 펫 그림 (exe 옆 sprites/가 우선)
 hiddenimports.append("jonnyang.platform.system")
 # 뉴스(RSS)와 휴지통은 쓸 때 import하므로 확실히 묶이게 적어 둔다
 hiddenimports += ["feedparser", "sgmllib", "send2trash", "send2trash.util"]

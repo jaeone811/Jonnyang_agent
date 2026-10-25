@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jonnyang"
-version = "0.2.0"
+version = "0.2.1"
 description = "존냥이: 규칙 기반 한국어 개인 비서 (Windows)"
 requires-python = ">=3.10"
 dependencies = [
@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.6"]
+dev = ["pytest>=8", "ruff>=0.6", "pillow>=10"]   # pillow: 아이콘·스프라이트 도구 (tools/)
 
 [project.scripts]
 jonnyang = "jonnyang.main:main"
@@ -30,6 +30,9 @@ jonnyang-pet = "jonnyang.gui.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"jonnyang.gui" = ["sprites/*.png", "sprites/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

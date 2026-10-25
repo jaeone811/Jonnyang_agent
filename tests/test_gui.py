@@ -50,6 +50,64 @@ def test_every_pose_paints(qapp):
         assert img.pixelColor(100, 80).alpha() > 0, pose      # 머리가 그려졌다
 
 
+def _paint(painter, pose, **kw):
+    from PySide6.QtCore import QRectF
+    from PySide6.QtGui import QColor, QImage, QPainter
+    img = QImage(190, 170, QImage.Format.Format_ARGB32)
+    img.fill(QColor(0, 0, 0, 0))
+    p = QPainter(img)
+    painter.paint(p, QRectF(0, 0, 190, 170), CatFrame(pose=pose, **kw))
+    p.end()
+    return img
+
+
+def _opaque(img) -> int:
+    return sum(img.pixelColor(x, y).alpha() > 128 for x in range(0, img.width(), 4) for y in range(0, img.height(), 4))
+
+
+def test_sprites_cover_every_pose(qapp, app):
+    from jonnyang.core.config import sprite_dir
+    from jonnyang.gui.sprite import SpritePainter, SpriteSheet
+    sheet = SpriteSheet(sprite_dir())
+    assert sheet.available
+    for name, n in sheet.counts.items():
+        assert len(sheet.frames(name)) == n, name          # 그림 파일이 manifest와 맞다
+    spec = app.ctx.persona.sprites
+    painter = SpritePainter(sheet, spec)
+    for pose in (*POSES, "drag"):
+        name, _ = painter.anim_for(CatFrame(pose=pose, pose_t=1.0))
+        assert sheet.has(name) and name == painter.poses[pose]["anim"], pose   # 모든 표정에 그림이 있다
+        assert _opaque(_paint(painter, pose, t=2.0, pose_t=0.5, heart_t=0.2)) > 300, pose
+    for extra in spec.get("idle_extras") or []:
+        assert sheet.has(extra), extra
+
+
+def test_sprite_animation_moves_and_idle_extras(qapp, app):
+    from jonnyang.core.config import sprite_dir
+    from jonnyang.gui.sprite import SpritePainter, SpriteSheet
+    painter = SpritePainter(SpriteSheet(sprite_dir()), {"idle_extras": ["wink", "yawn"], "idle_extra_every": 20,
+                                                        "idle_extra_sec": 2})
+    spec = painter.poses["idle"]
+    idx = {painter.frame_index(CatFrame(pose="idle", pose_t=t), "idle", spec) for t in (0.0, 0.3, 0.6, 0.9, 1.2)}
+    assert len(idx) > 1                                       # 프레임이 넘어간다
+    assert painter.anim_for(CatFrame(pose="idle", pose_t=5))[0] == "idle"
+    assert painter.anim_for(CatFrame(pose="idle", pose_t=21))[0] == "wink"     # 가끔 윙크
+    assert painter.anim_for(CatFrame(pose="idle", pose_t=41))[0] == "yawn"     # 다음엔 하품
+    assert painter.anim_for(CatFrame(pose="idle", pose_t=45))[0] == "idle"
+    a = _paint(painter, "happy", t=0.0, pose_t=0.0)
+    b = _paint(painter, "happy", t=0.3, pose_t=0.3)
+    assert a != b
+
+
+def test_sprite_fallback_to_shapes(qapp, tmp_path):
+    from jonnyang.gui.sprite import SpritePainter, SpriteSheet, make_painter
+    assert isinstance(make_painter(tmp_path), CatPainter)            # 그림 폴더가 비면 도형 고양이
+    assert isinstance(make_painter(tmp_path, {"enabled": False}), CatPainter)
+    broken = SpritePainter(SpriteSheet(tmp_path))
+    assert not broken.available
+    assert _opaque(_paint(broken, "idle", t=1.0)) > 300                # 그려지긴 한다 (도형으로)
+
+
 def test_startup_greets_and_enables_input(pet):
     win, _ = pet
     assert win.input.isEnabled()
@@ -228,3 +286,24 @@ def test_online_reply_runs_in_background(qapp, make_app):
     finally:
         win.shutdown()
         win.close()
+
+
+def test_drag_floats_then_restores_pose(pet):
+    from PySide6.QtCore import QPoint, QPointF, Qt
+    from PySide6.QtGui import QMouseEvent
+    win, _ = pet
+    win.submit("쇼핑 목록 비워줘")
+    before = win.cat.pose                           # 대답 기다리는 표정
+    cat = win.cat
+
+    def ev(kind, x):
+        pos = QPointF(40 + x, 40)
+        glob = QPointF(cat.mapToGlobal(QPoint(40 + x, 40)))
+        btns = Qt.MouseButton.NoButton if kind == QMouseEvent.Type.MouseButtonRelease else Qt.MouseButton.LeftButton
+        return QMouseEvent(kind, pos, glob, Qt.MouseButton.LeftButton, btns, Qt.KeyboardModifier.NoModifier)
+
+    cat.mousePressEvent(ev(QMouseEvent.Type.MouseButtonPress, 0))
+    cat.mouseMoveEvent(ev(QMouseEvent.Type.MouseMove, 30))
+    assert cat.pose == "drag"                       # 끌려가는 동안 둥실
+    cat.mouseReleaseEvent(ev(QMouseEvent.Type.MouseButtonRelease, 30))
+    assert cat.pose == before

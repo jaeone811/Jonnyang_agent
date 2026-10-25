@@ -21,7 +21,7 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from jonnyang.app import build_app  # noqa: E402
 from jonnyang.core.storage import Storage  # noqa: E402
-from jonnyang.gui.painter import POSES, CatFrame, CatPainter  # noqa: E402
+from jonnyang.gui.painter import POSES, CatFrame  # noqa: E402
 from jonnyang.gui.window import WIN_H, WIN_W, PetWindow  # noqa: E402
 from jonnyang.platform.fake import fake_platform  # noqa: E402
 
@@ -81,14 +81,14 @@ def main(out: Path) -> None:
     app.processEvents()
     shot(win, out / "pet-alert.png")
 
-    painter = CatPainter(ctx.persona.appearance)
+    painter = win.cat.cat                 # 그림 고양이 (그림이 없으면 도형 고양이)
+    poses = (*POSES, "drag")
     cols = 5
-    rows = (len(POSES) + cols - 1) // cols
-    sheet = QImage(180 * cols, 170 * rows, QImage.Format.Format_ARGB32)
-    sheet.fill(QColor(0, 0, 0, 0))
+    rows = (len(poses) + cols - 1) // cols
+    sheet = wallpaper(190 * cols, 175 * rows)
     p = QPainter(sheet)
-    for i, pose in enumerate(POSES):
-        painter.paint(p, QRectF((i % cols) * 180, (i // cols) * 170, 180, 162),
+    for i, pose in enumerate(poses):
+        painter.paint(p, QRectF((i % cols) * 190, (i // cols) * 175, 190, 170),
                       CatFrame(pose=pose, t=1.0, pose_t=5.0))
     p.end()
     sheet.save(str(out / "pet-poses.png"))

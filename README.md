@@ -2,13 +2,13 @@
 
 Windows 10/11용 규칙 기반 한국어 개인 비서. 고양이 캐릭터. LLM/AI API 없이 키워드·형태소·유사도 규칙으로만 명령을 알아듣는다.
 
-바탕화면 구석에 떠 있는 데스크톱 펫이다. 하얀 장모 고양이에 금색 왕관과 남색 망토를 두른 존냥이가 말풍선에 지금 하는 일(타이머 남은 시간, 다음 알람, 날씨 알아보는 중, 대답 기다리는 중)을 보여주고, 고양이 밑 입력창에 말을 걸면 된다. 이미지 파일 없이 코드(QPainter)로 그린다.
+바탕화면 구석에 떠 있는 데스크톱 펫이다. 하얀 장모 고양이에 금색 왕관과 남색 망토를 두른 존냥이가 말풍선에 지금 하는 일(타이머 남은 시간, 다음 알람, 날씨 알아보는 중, 대답 기다리는 중)을 보여주고, 고양이 밑 입력창에 말을 걸면 된다. 사용자 컨셉 아트·스프라이트 시트에서 잘라낸 그림으로 움직인다(눈 깜빡임, 꼬리 흔들기, 노트북 두드리기, 마법책 등). 가만히 있으면 가끔 윙크·하품·기지개를 하고, 끌고 다니면 둥실 떠 있는다.
 
 | 응답 | 작업 중 | 확인 필요 | 알림 |
 |---|---|---|---|
 | ![](docs/images/pet-reply.png) | ![](docs/images/pet-working.png) | ![](docs/images/pet-confirm.png) | ![](docs/images/pet-alert.png) |
 
-표정 (대기·기쁨·혼란·놀람·질문·수면·생각·듣기·노트북 검색·마법책·폴더 정리·시무룩·애정): ![](docs/images/pet-poses.png)
+표정 (대기·기쁨·혼란·놀람·질문·수면·생각·듣기·노트북 검색·마법책·폴더 정리·시무룩·애정·끌기): ![](docs/images/pet-poses.png)
 
 ## 다운로드해서 바로 실행 (Python 설치 필요 없음)
 
@@ -144,7 +144,7 @@ exe 직접 빌드 (Windows에서):
 .\.venv\Scripts\python.exe tools\make_icon.py build\jonnyang.ico
 .\.venv\Scripts\python.exe -m PyInstaller --noconfirm --clean packaging\jonnyang.spec
 .\.venv\Scripts\python.exe tools\package.py dist\Jonnyang       # → dist\Jonnyang-버전-win64.zip
-dist\Jonnyang-0.2.0-win64\Jonnyang\Jonnyang.exe --selftest selftest.txt   # 묶인 게 다 있는지 점검
+dist\Jonnyang-0.2.1-win64\Jonnyang\Jonnyang.exe --selftest selftest.txt   # 묶인 게 다 있는지 점검
 ```
 
 GUI 테스트(`tests/test_gui.py`)는 화면 없이(`QT_QPA_PLATFORM=offscreen`) 돈다.
