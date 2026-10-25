@@ -168,3 +168,20 @@ def test_geocoding_prefers_biggest_place(make_app):
     out = app.say("고성군 날씨")
     assert "고성군" in out
     assert "latitude=38.38" in app.net.calls[-1]
+
+
+def test_geocoding_two_letter_name_also_tries_si_gun(make_app):
+    """지오코딩은 2글자를 정확히 일치로만 찾는다: '양평'은 마을만, '양평군'으로 찾아야 군청 소재지가 나온다."""
+    from urllib.parse import parse_qs, urlparse
+
+    def geo(url):
+        q = parse_qs(urlparse(url).query)
+        return {"양평": {"results": [{"name": "양평", "latitude": 35.1, "longitude": 126.9}]},
+                "양평군": {"results": [{"name": "양평군", "latitude": 37.49, "longitude": 127.49,
+                                         "population": 118000}]}}.get(q["name"][0], {})
+
+    app = make_app(routes={FORECAST: FORECAST_JSON, GEO: geo})
+    out = app.say("양평 날씨")
+    assert "양평군" in out
+    assert "latitude=37.49" in app.net.calls[-1]
+    assert all("countryCode=KR" in c for c in app.net.calls if c.startswith(GEO))

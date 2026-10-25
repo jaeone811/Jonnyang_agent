@@ -26,6 +26,23 @@ def pick_place(results: list[dict]) -> dict | None:
     return max(enumerate(results), key=lambda ir: (ir[1].get("population") or 0, -ir[0]))[1]
 
 
+def geocode(network, url: str, name: str) -> dict | None:
+    """지역 이름 → Open-Meteo 지오코딩 결과 하나.
+
+    지오코딩은 2글자 이름을 정확히 일치로만 찾아서 "수원"으로는 "수원시"가 안 나오고 같은 이름의 작은 마을만
+    나온다(CI 실측: 수원 → 전남 마을, 고양 → 충남 마을). 2글자면 시·군·구를 붙인 이름도 같이 찾아서
+    한국 결과 중 인구가 가장 많은 곳을 고른다. 한국에 없으면 나라 제한 없이 찾는다(도쿄, 파리 등)."""
+    names = [name] + ([name + s for s in ("시", "군", "구")] if len(name) == 2 else [])
+    base = {"count": 10, "language": "ko", "format": "json"}
+    found: list[dict] = []
+    for n in names:
+        data = network.get_json(url, {"name": n, **base, "countryCode": "KR"}, ttl=30 * 86400)
+        found += data.get("results") or []
+    if not found:
+        found = network.get_json(url, {"name": name, **base}, ttl=30 * 86400).get("results") or []
+    return pick_place(found)
+
+
 def _weather_hint(req) -> float:
     return 0.4 if RAIN_RE.search(req.text) else 0.0
 
@@ -78,14 +95,10 @@ class WeatherSkill(OnlineSkill):
         key = PLACE_SUFFIX.sub("", name) if PLACE_SUFFIX.sub("", name) in self.places else name
         if key in self.places:
             return key, *self.places[key]
-        url = self.cfg["geocode_url"]
-        for country in ("KR", None):
-            data = self.ctx.network.get_json(url, {"name": name, "count": 10, "language": "ko", "format": "json",
-                                                   "countryCode": country}, ttl=30 * 86400)
-            r = pick_place(data.get("results") or [])
-            if r is not None:
-                return str(r.get("name") or name), float(r["latitude"]), float(r["longitude"])
-        return None
+        r = geocode(self.ctx.network, self.cfg["geocode_url"], name)
+        if r is None:
+            return None
+        return str(r.get("name") or name), float(r["latitude"]), float(r["longitude"])
 
     def home(self) -> tuple[str, float, float]:
         saved = self.ctx.storage.get_setting("weather.home")
