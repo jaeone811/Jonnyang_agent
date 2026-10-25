@@ -1,10 +1,12 @@
 """사용자 스프라이트 시트(assets/source)에서 펫 프레임을 잘라 src/jonnyang/gui/sprites/에 저장한다.
 
-- animation_sheet.webp: 칸(격자)마다 한 프레임. 줄마다 하나의 애니메이션(9프레임).
-- pose_sheet.webp: 자세 하나씩 흩어져 있는 시트. 상자 좌표로 자른다 (알파 채널은 흐릿해서 흰 배경에 합성해서 쓴다).
+- 표정마다 깨끗한 그림 한 장만 고른다(CELLS, POSES). 애니메이션 시트의 칸들은 다리가 빈 칸, 배경이 덜 지워진
+  칸이 섞여 있고 계속 넘기면 정신없어서, 움직임은 gui/sprite.py가 코드로 더한다.
+- animation_sheet.webp: 칸(격자) 하나 = 한 프레임. pose_sheet.webp: 자세가 흩어진 시트, 상자 좌표로 자른다
+  (알파 채널은 흐릿해서 흰 배경에 합성해서 쓴다).
 - 배경: 칸 테두리에서 시작해 배경색과 비슷한 픽셀을 채우기(flood fill)로 지운다. 고양이 외곽선이 경계가 된다.
-  가장자리는 반투명으로 만들고 배경색을 빼서(흰 테두리 번짐 방지) 저장한다.
-- 프레임 번호 글자, 작은 얼룩은 버린다. 같은 애니메이션 안에서는 첫 프레임에 맞춰 위치를 맞춘다(덜덜 떨림 방지).
+  자세 시트는 외곽선 바깥의 옅은 빛 번짐 띠를 몇 겹 벗긴다(peel). 가장자리는 1px 깎고 살짝 흐리게.
+- 프레임 번호 글자, 작은 얼룩은 버린다. 여러 칸을 쓰면 첫 프레임에 맞춰 위치를 맞춘다(덜덜 떨림 방지).
 - 모든 프레임은 같은 크기 캔버스(manifest.yaml의 frame)에, 발끝을 같은 높이(baseline)에 맞춰 놓는다.
   2배 크기로 저장해서 고해상도 화면에서도 덜 뭉개지게 한다.
 
@@ -32,38 +34,29 @@ FRAME_W, FRAME_H = 150, 130      # 화면 좌표 기준 캔버스
 BASELINE = 124                   # 발끝 높이
 BG_THRESHOLD = 14                # 배경색과의 최대 차이 (채널별)
 POSE_THRESHOLD = 24              # 자세 시트는 고양이 둘레에 옅은 빛 번짐이 있어서 더 넓게 지운다
+POSE_PEEL = 3                    # 자세 시트: 외곽선 바깥에 남는 옅은 띠를 몇 겹 벗길지
+PEEL_LIGHT = 200                 # 이보다 밝은(세 채널 모두) 가장자리 픽셀을 띠로 본다
 
 # animation_sheet.webp 격자 (픽셀 좌표, 칸 테두리 선 위치)
 SHEET_COLS = [198, 345, 486, 625, 767, 907, 1049, 1191, 1333, 1527]
 SHEET_ROWS = [(9, 116), (127, 233), (242, 348), (357, 459), (467, 568), (578, 676), (685, 778), (786, 861),
               (869, 936), (943, 1016)]
-# 이름: (줄 번호, 크기 보정). 아래쪽 세 줄은 칸이 작아서 고양이도 작게 그려져 있다.
-ANIMATIONS = {
-    "idle": (0, 1.0),
-    "sleep": (3, 1.0),
-    "happy": (4, 1.0),
-    "surprise": (5, 1.0),
-    "magic": (6, 1.0),
-    "coding": (7, 1.32),
-    "error": (8, 1.38),
+# 표정마다 그림 한 장만 쓴다(프레임을 계속 바꾸면 정신없고, 다리가 빈 칸·배경이 덜 지워진 칸이 섞여 있었다).
+# 움직임(숨쉬기·깡총·흔들기)과 효과(하트·반짝이·물음표)는 코드(gui/sprite.py)가 더한다.
+# animation_sheet.webp에서 고르는 칸: 이름: (줄, 칸, 크기 보정)
+CELLS = {
+    "sleep": (3, 2, 1.0),       # 잠 (깨끗한 칸)
 }
 # pose_sheet.webp 상자 (위, 왼쪽, 아래, 오른쪽) 와 크기 보정
 POSES = {
-    "front": ((58, 22, 206, 138), 0.70),       # 정면
-    "wait": ((60, 588, 206, 700), 0.70),       # 기본 대기
-    "wink": ((64, 866, 204, 990), 0.70),       # 꼬리 흔들기 (윙크)
-    "yawn": ((62, 1000, 206, 1102), 0.70),     # 하품
-    "love": ((308, 914, 412, 1010), 0.78),     # 애정 (하트)
+    "front": ((58, 22, 206, 138), 0.70),       # 정면: 기본 자세 (대기·기쁨·질문·알림·혼란)
     "float": ((482, 346, 630, 470), 0.70),     # 공중부양 (끌고 다닐 때)
-    "stretch": ((502, 678, 634, 792), 0.70),   # 기지개
     "search": ((718, 448, 838, 592), 0.70),    # 검색 중 (노트북)
-    "files": ((718, 598, 842, 744), 0.70),     # 파일 정리
-    "notify": ((720, 880, 838, 988), 0.70),    # 알림 (종)
-    "cheer": ((716, 1000, 838, 1114), 0.70),   # 응원 (반짝이)
+    "files": ((714, 596, 842, 720), 0.70),     # 파일 정리
     "book": ((726, 16, 838, 142), 0.70),       # 책 열기
 }
 # 공중에 떠 있는 자세는 발끝을 바닥선보다 조금 위에 둔다
-LIFT = {"float": 6, "magic": 4}
+LIFT = {"float": 6}
 
 
 def flood_background(cell: np.ndarray, thr: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -118,8 +111,9 @@ def components(mask: np.ndarray) -> list[np.ndarray]:
     return out
 
 
-def cut(cell: np.ndarray, drop_bottom: int = 0, thr: int = BG_THRESHOLD) -> np.ndarray:
-    """RGB 칸 → RGBA (배경 투명). drop_bottom: 아래쪽 이만큼 안에만 있는 덩어리(프레임 번호)는 버린다."""
+def cut(cell: np.ndarray, drop_bottom: int = 0, thr: int = BG_THRESHOLD, peel: int = 0) -> np.ndarray:
+    """RGB 칸 → RGBA (배경 투명). drop_bottom: 아래쪽 이만큼 안에만 있는 덩어리(프레임 번호)는 버린다.
+    peel: 바깥에서부터 밝은 픽셀(옅은 빛 번짐 띠)을 이만큼 겹 벗긴다. 진한 외곽선에서 멈춘다."""
     h, w, _ = cell.shape
     bg, ref, diff = flood_background(cell, thr)
     fg = ~bg
@@ -131,10 +125,18 @@ def cut(cell: np.ndarray, drop_bottom: int = 0, thr: int = BG_THRESHOLD) -> np.n
         if drop_bottom and (top >= h - drop_bottom or (top >= body_bottom - 4 and len(pts) < 200)):
             continue                     # 프레임 번호 (고양이 발밑에 따로 떨어진 작은 글자)
         keep[pts[:, 0], pts[:, 1]] = True
-    # 외곽선 안에 갇힌 넓은 배경(다리 사이 등)도 지운다
+    # 외곽선 안에 갇힌 넓은 배경(다리 사이 등)도 지운다. 흰 털(다리)까지 지우지 않게 아주 배경색에 가까운 것만.
     for pts in components(~keep):
-        if len(pts) > 40 and diff[pts[:, 0], pts[:, 1]].mean() < 5:
+        if len(pts) > 60 and diff[pts[:, 0], pts[:, 1]].mean() < 3:
             keep[pts[:, 0], pts[:, 1]] = False
+    light = cell.min(2) > PEEL_LIGHT
+    for _ in range(peel):
+        inner = np.asarray(Image.fromarray((keep * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(3))) > 0
+        keep &= ~(keep & ~inner & light)
+    if peel:                             # 벗기고 남은 가는 부스러기
+        for pts in components(keep):
+            if len(pts) < 40:
+                keep[pts[:, 0], pts[:, 1]] = False
     # 가장자리: 바깥 1px(배경과 섞인 옅은 테두리)을 깎고 살짝 흐리게 해서 계단 모양을 없앤다.
     # 투명한 쪽 픽셀 색은 주변 고양이 색으로 채워서, 흐린 가장자리가 하얗게 번지지 않게 한다.
     core = Image.fromarray((keep * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(3))
@@ -224,13 +226,13 @@ def main() -> int:
         old.unlink()
     manifest: dict = {"frame": [FRAME_W, FRAME_H], "scale": OUT_SCALE, "baseline": BASELINE, "animations": {}}
     strips: dict[str, list[Image.Image]] = {}
-    for name, (row, scale) in ANIMATIONS.items():
+    for name, (row, col, scale) in CELLS.items():
         y0, y1 = SHEET_ROWS[row]
-        cells = [cut(anim_sheet[y0 + 3:y1 - 2, SHEET_COLS[c] + 3:SHEET_COLS[c + 1] - 2], drop_bottom=13)
-                 for c in range(9)]
-        strips[name] = place(cells, scale, LIFT.get(name, 0))
+        cell = cut(anim_sheet[y0 + 3:y1 - 2, SHEET_COLS[col] + 3:SHEET_COLS[col + 1] - 2], drop_bottom=13)
+        strips[name] = place([cell], scale, LIFT.get(name, 0), align=False)
     for name, ((y0, x0, y1, x1), scale) in POSES.items():
-        strips[name] = place([cut(pose_sheet[y0:y1, x0:x1], thr=POSE_THRESHOLD)], scale, LIFT.get(name, 0), align=False)
+        cell = cut(pose_sheet[y0:y1, x0:x1], thr=POSE_THRESHOLD, peel=POSE_PEEL)
+        strips[name] = place([cell], scale, LIFT.get(name, 0), align=False)
     for name, frames in strips.items():
         fw, fh = frames[0].size
         strip = Image.new("RGBA", (fw * len(frames), fh), (0, 0, 0, 0))

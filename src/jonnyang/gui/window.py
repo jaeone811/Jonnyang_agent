@@ -131,8 +131,8 @@ class CatWidget(QWidget):
         self.transient = None
 
     def pet(self) -> None:
+        """쓰다듬기: 그림은 그대로 두고 몸을 눌렀다 펴며 하트 (그리는 쪽이 heart_t로 처리)."""
         self._heart_since = self.mono()
-        self.flash("happy", 1.6)
 
     @property
     def pose(self) -> str:

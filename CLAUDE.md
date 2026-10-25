@@ -31,7 +31,8 @@ Windows 10/11용 규칙 기반 개인 비서 에이전트. 고양이 캐릭터. 
 
 ## 데스크톱 펫 (GUI)
 - GUI는 `src/jonnyang/gui/`(PySide6)에만 둔다. `python -m jonnyang`은 펫, `--cli`는 콘솔. 두 화면 모두 같은 `Dispatcher`를 쓴다.
-- 고양이는 사용자 스프라이트 그림(`gui/sprites/*.png`, `gui/sprite.py`)으로 그린다. 그림은 `assets/source/`의 원본 시트에서 `tools/extract_sprites.py`로 만든다(PNG를 손으로 고치지 않는다). 표정 → 애니메이션은 `persona.yaml` `sprites`.
+- 고양이는 사용자 스프라이트 그림(`gui/sprites/*.png`, `gui/sprite.py`)으로 그린다. 그림은 `assets/source/`의 원본 시트에서 `tools/extract_sprites.py`로 만든다(PNG를 손으로 고치지 않는다). 표정 → 그림·움직임·효과는 `persona.yaml` `sprites`.
+- 그림은 표정마다 한 장으로 가만히 둔다(프레임을 계속 넘기지 않는다). 움직임(숨쉬기·깡총·흔들기·갸웃)과 효과(반짝이·하트·물음표)는 코드로. 클릭은 그림을 바꾸지 않고 몸을 눌렀다 펴는 크기 변화 + 하트.
 - 그림이 없거나 `sprites.enabled: false`면 `gui/painter.py`의 도형 고양이로 그린다(같은 `paint(p, rect, CatFrame)`). 디자인은 사용자 컨셉 아트 기준(하얀 장모, 파란 눈, 분홍 귀, 금색 왕관+파란 보석, 남색 망토+금테+브로치, 끝이 금빛인 꼬리). 색(`appearance`), 응답 키 → 표정 규칙(`poses`), 펫 문구(`ui`)는 `persona.yaml`에 둔다.
 - 새 표정을 만들면 `sprites.poses`에도 그림을 연결한다(`tests/test_gui.py`가 모든 표정에 그림이 있는지 검사).
 - Qt 위젯은 GUI 스레드에서만 만진다. 스케줄러 스레드의 알림은 `ctx.reply_sink` → `Bridge.notified` Signal로 넘긴다. 형태소 사전 로딩은 별도 스레드에서 한다.

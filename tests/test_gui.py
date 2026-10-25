@@ -78,25 +78,30 @@ def test_sprites_cover_every_pose(qapp, app):
         name, _ = painter.anim_for(CatFrame(pose=pose, pose_t=1.0))
         assert sheet.has(name) and name == painter.poses[pose]["anim"], pose   # 모든 표정에 그림이 있다
         assert _opaque(_paint(painter, pose, t=2.0, pose_t=0.5, heart_t=0.2)) > 300, pose
-    for extra in spec.get("idle_extras") or []:
-        assert sheet.has(extra), extra
 
 
-def test_sprite_animation_moves_and_idle_extras(qapp, app):
+def _bbox(img):
+    pts = [(x, y) for x in range(0, img.width(), 2) for y in range(0, img.height(), 2)
+           if img.pixelColor(x, y).alpha() > 128]
+    xs, ys = [x for x, _ in pts], [y for _, y in pts]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def test_sprite_stays_still_and_click_only_squashes(qapp, app):
     from jonnyang.core.config import sprite_dir
     from jonnyang.gui.sprite import SpritePainter, SpriteSheet
-    painter = SpritePainter(SpriteSheet(sprite_dir()), {"idle_extras": ["wink", "yawn"], "idle_extra_every": 20,
-                                                        "idle_extra_sec": 2})
-    spec = painter.poses["idle"]
-    idx = {painter.frame_index(CatFrame(pose="idle", pose_t=t), "idle", spec) for t in (0.0, 0.3, 0.6, 0.9, 1.2)}
-    assert len(idx) > 1                                       # 프레임이 넘어간다
-    assert painter.anim_for(CatFrame(pose="idle", pose_t=5))[0] == "idle"
-    assert painter.anim_for(CatFrame(pose="idle", pose_t=21))[0] == "wink"     # 가끔 윙크
-    assert painter.anim_for(CatFrame(pose="idle", pose_t=41))[0] == "yawn"     # 다음엔 하품
-    assert painter.anim_for(CatFrame(pose="idle", pose_t=45))[0] == "idle"
-    a = _paint(painter, "happy", t=0.0, pose_t=0.0)
-    b = _paint(painter, "happy", t=0.3, pose_t=0.3)
-    assert a != b
+    painter = SpritePainter(SpriteSheet(sprite_dir()), app.ctx.persona.sprites)
+    for pose in (*POSES, "drag"):
+        name, spec = painter.anim_for(CatFrame(pose=pose))
+        idx = {painter.frame_index(CatFrame(pose=pose, t=t, pose_t=t), name, spec) for t in (0, 0.4, 1.3, 7.7, 30)}
+        assert idx == {0}, pose                                   # 그림은 넘기지 않고 가만히
+    assert len({painter.anim_for(CatFrame(pose=p))[0] for p in ("idle", "happy", "ask", "alert", "love")}) == 1
+    calm = _bbox(_paint(painter, "idle", t=0.0, pose_t=10.0))
+    poked = _bbox(_paint(painter, "idle", t=0.0, pose_t=10.0, heart_t=0.15))     # 클릭 직후: 옆으로 퍼진다
+    assert poked[2] - poked[0] > calm[2] - calm[0]
+    assert poked[1] > calm[1] or poked[3] - poked[1] < calm[3] - calm[1]
+    done = _bbox(_paint(painter, "idle", t=0.0, pose_t=10.0, heart_t=5.0))       # 다 끝나면 원래대로
+    assert done == calm
 
 
 def test_sprite_fallback_to_shapes(qapp, tmp_path):

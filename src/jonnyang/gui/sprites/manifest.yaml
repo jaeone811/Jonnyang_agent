@@ -5,22 +5,9 @@ frame:
 scale: 2
 baseline: 124
 animations:
-  idle: 9
-  sleep: 9
-  happy: 9
-  surprise: 9
-  magic: 9
-  coding: 9
-  error: 9
+  sleep: 1
   front: 1
-  wait: 1
-  wink: 1
-  yawn: 1
-  love: 1
   float: 1
-  stretch: 1
   search: 1
   files: 1
-  notify: 1
-  cheer: 1
   book: 1
