@@ -194,7 +194,7 @@ sprites:
     drag:     {anim: float, motion: float, shadow: 50}     # 끌고 다닐 때
 
 # 응답 키 → 표정. 위에서부터 처음 맞는 규칙을 쓴다(* 와일드카드).
-# 표정: idle happy confused alert ask sleep think listen search(노트북) book(마법책) files(폴더) sad love
+# 표정: idle happy confused alert ask sleep think listen search(홀로그램 창) book(마법책) files(상자) sad love
 poses:
   default: happy          # 규칙에 없고 성공
   error: confused         # 규칙에 없고 실패

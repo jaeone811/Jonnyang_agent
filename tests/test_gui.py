@@ -282,7 +282,7 @@ def test_online_reply_runs_in_background(qapp, make_app):
     win.attach(app.ctx, app.d)
     try:
         win.submit("오늘 날씨 어때")
-        assert win.bubble.state == "running" and win.cat.pose == "search"   # 기다리는 동안 노트북 두드리는 표정
+        assert win.bubble.state == "running" and win.cat.pose == "search"   # 기다리는 동안 홀로그램 창 보는 표정
         deadline = _time.monotonic() + 5
         while "서울" not in win.bubble.text() and _time.monotonic() < deadline:
             qapp.processEvents()

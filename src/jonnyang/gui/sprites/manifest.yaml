@@ -2,12 +2,12 @@
 frame:
 - 150
 - 130
-scale: 2
+scale: 3
 baseline: 124
 animations:
-  sleep: 1
   front: 1
-  float: 1
-  search: 1
   files: 1
+  search: 1
   book: 1
+  sleep: 1
+  float: 1

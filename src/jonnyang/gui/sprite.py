@@ -228,7 +228,7 @@ class SpritePainter:
             return
         pix = frames[0]
         s = self.sheet.scale
-        src = QRectF(36 * s, 20 * s, 86 * s, 86 * s)        # 왕관~가슴 (프레임 캔버스 좌표)
+        src = QRectF(32 * s, 14 * s, 92 * s, 92 * s)        # 왕관~가슴 (프레임 캔버스 좌표)
         p.save()
         p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         p.drawPixmap(rect, pix, src)
