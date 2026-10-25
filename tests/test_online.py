@@ -185,3 +185,18 @@ def test_geocoding_two_letter_name_also_tries_si_gun(make_app):
     assert "양평군" in out
     assert "latitude=37.49" in app.net.calls[-1]
     assert all("countryCode=KR" in c for c in app.net.calls if c.startswith(GEO))
+
+
+def test_geocoding_admin_area_beats_village_without_population(make_app):
+    """'제천'은 같은 이름 마을(인구 있음)이 '제천시'(인구 정보 없음)보다 먼저 잡혔다(CI 실측).
+    행정구역 이름이 맞으면 그쪽."""
+    from urllib.parse import parse_qs, urlparse
+
+    def geo(url):
+        name = parse_qs(urlparse(url).query)["name"][0]
+        return {"단양": {"results": [{"name": "단양", "latitude": 35.37, "longitude": 127.31, "population": 900}]},
+                "단양군": {"results": [{"name": "단양군", "latitude": 36.98, "longitude": 128.36}]}}.get(name, {})
+
+    app = make_app(routes={FORECAST: FORECAST_JSON, GEO: geo})
+    app.say("단양 날씨")
+    assert "latitude=36.98" in app.net.calls[-1]

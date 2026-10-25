@@ -30,17 +30,23 @@ def geocode(network, url: str, name: str) -> dict | None:
     """지역 이름 → Open-Meteo 지오코딩 결과 하나.
 
     지오코딩은 2글자 이름을 정확히 일치로만 찾아서 "수원"으로는 "수원시"가 안 나오고 같은 이름의 작은 마을만
-    나온다(CI 실측: 수원 → 전남 마을, 고양 → 충남 마을). 2글자면 시·군·구를 붙인 이름도 같이 찾아서
-    한국 결과 중 인구가 가장 많은 곳을 고른다. 한국에 없으면 나라 제한 없이 찾는다(도쿄, 파리 등)."""
-    names = [name] + ([name + s for s in ("시", "군", "구")] if len(name) == 2 else [])
+    나온다(CI 실측: 수원 → 전남 마을, 고양 → 충남 마을). 2글자면 광역시·시·군·구를 붙인 이름도 찾아서,
+    그 이름과 똑같은 행정구역이 있으면 그것(인구 정보가 없을 때도 있어서 마을보다 먼저), 없으면 인구가 가장 많은 곳.
+    한국에 없으면 나라 제한 없이 찾는다(도쿄, 파리 등)."""
     base = {"count": 10, "language": "ko", "format": "json"}
-    found: list[dict] = []
-    for n in names:
-        data = network.get_json(url, {"name": n, **base, "countryCode": "KR"}, ttl=30 * 86400)
-        found += data.get("results") or []
-    if not found:
-        found = network.get_json(url, {"name": name, **base}, ttl=30 * 86400).get("results") or []
-    return pick_place(found)
+
+    def search(n: str, **extra) -> list[dict]:
+        return network.get_json(url, {"name": n, **base, **extra}, ttl=30 * 86400).get("results") or []
+
+    found = search(name, countryCode="KR")
+    admin: list[dict] = []
+    if len(name) == 2:
+        for suffix in ("광역시", "시", "군", "구"):      # "광주"는 광주광역시가 경기 광주시보다 먼저
+            for r in search(name + suffix, countryCode="KR"):
+                (admin if r.get("name") == name + suffix else found).append(r)
+    if admin:
+        return pick_place(admin)
+    return pick_place(found or search(name))
 
 
 def _weather_hint(req) -> float:

@@ -19,7 +19,7 @@ datas.append((str(ROOT / "config"), "config"))   # exe 옆 config/가 없을 때
 datas.append((str(ROOT / "src" / "jonnyang" / "gui" / "sprites"), "sprites"))   # 펫 그림 (exe 옆 sprites/가 우선)
 hiddenimports.append("jonnyang.platform.system")
 # 뉴스(RSS)와 휴지통은 쓸 때 import하므로 확실히 묶이게 적어 둔다
-hiddenimports += ["feedparser", "sgmllib", "send2trash", "send2trash.util"]
+hiddenimports += ["feedparser", "send2trash", "send2trash.util"]
 if sys.platform == "win32":
     # send2trash: pywin32가 없으면 ctypes로 SHFileOperation을 쓰는 legacy 쪽을 쓴다
     hiddenimports += ["pycaw.pycaw", "pycaw.utils", "send2trash.win", "send2trash.win.legacy"]
