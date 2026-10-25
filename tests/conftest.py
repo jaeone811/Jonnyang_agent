@@ -4,6 +4,7 @@ from datetime import datetime
 import pytest
 
 from jonnyang.app import build_app, make_analyzer
+from jonnyang.core.network import FakeNetwork
 from jonnyang.core.storage import Storage
 from jonnyang.platform.fake import fake_platform
 
@@ -25,13 +26,14 @@ class Clock:
 
 
 class App:
-    def __init__(self, analyzer, storage=None, now=NOW):
+    def __init__(self, analyzer, storage=None, now=NOW, files_root=None, routes=None):
         self.clock = Clock(now)
         self.notes: list[str] = []
-        self.platform = fake_platform()
+        self.platform = fake_platform(files_root)
+        self.net = FakeNetwork(routes or {})        # 실제 인터넷은 안 쓴다. 경로가 없으면 '오프라인'
         self.ctx, self.d = build_app(platform=self.platform, analyzer=analyzer,
                                      storage=storage or Storage(":memory:"), clock=self.clock,
-                                     sink=self.notes.extend, rng=random.Random(0), beep_gap=0)
+                                     sink=self.notes.extend, rng=random.Random(0), beep_gap=0, network=self.net)
 
     def say(self, text: str) -> str:
         return "\n".join(self.d.handle(text))

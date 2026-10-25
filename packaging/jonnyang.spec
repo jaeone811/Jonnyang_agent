@@ -17,8 +17,11 @@ for pkg in ("kiwipiepy", "kiwipiepy_model"):     # 형태소 분석기 확장 �
     hiddenimports += h
 datas.append((str(ROOT / "config"), "config"))   # exe 옆 config/가 없을 때 쓰는 기본값
 hiddenimports.append("jonnyang.platform.system")
+# 뉴스(RSS)와 휴지통은 쓸 때 import하므로 확실히 묶이게 적어 둔다
+hiddenimports += ["feedparser", "sgmllib", "send2trash", "send2trash.util"]
 if sys.platform == "win32":
-    hiddenimports += ["pycaw.pycaw", "pycaw.utils"]
+    # send2trash: pywin32가 없으면 ctypes로 SHFileOperation을 쓰는 legacy 쪽을 쓴다
+    hiddenimports += ["pycaw.pycaw", "pycaw.utils", "send2trash.win", "send2trash.win.legacy"]
 
 a = Analysis(
     [str(ROOT / "packaging" / "launcher.py")],

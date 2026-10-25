@@ -39,7 +39,7 @@ class Request:
                 return True   # 시간 표현은 있는데 문제가 있음 → 해당 의도로 가서 오류를 알려준다
             return self.time.duration is not None and not self.time.relative
         if name == "at":
-            return self.time.at is not None or self.time.error is not None
+            return self.time.at is not None or self.time.error is not None or self.time.repeat is not None
         if name == "number":
             return bool(self.numbers)
         if name == "quoted":

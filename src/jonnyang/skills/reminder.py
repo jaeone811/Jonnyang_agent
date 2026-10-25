@@ -1,6 +1,8 @@
 """리마인더와 알람. 둘 다 SQLite에 저장되고 프로그램이 켜져 있을 때 울린다.
 
 꺼져 있는 동안 시간이 지난 것은 다음 시작 때 '놓친 알림'으로 알려준다.
+반복("매일 아침 8시", "평일마다", "30분마다")은 울릴 때마다 다음 시각으로 at을 옮긴다.
+놓친 반복은 한 번만 알리고 다음 시각으로 넘긴다.
 """
 
 from __future__ import annotations
@@ -11,6 +13,7 @@ from typing import Any
 
 from jonnyang.core.storage import iso
 from jonnyang.nlu.matcher import Intent
+from jonnyang.nlu.timeparse import Repeat
 from jonnyang.skills.base import Confirm, Result, Skill
 
 NO_RE = re.compile(r"(\d+)\s*번")
@@ -59,13 +62,18 @@ class _Scheduled(Skill):
             "SELECT * FROM reminders WHERE kind = ? AND delivered = 0 ORDER BY at", (self.kind,))
 
     def _items(self, rows) -> list[dict[str, Any]]:
-        return [{"no": i, "at": datetime.fromisoformat(r["at"]), "message": r["message"]}
-                for i, r in enumerate(rows, start=1)]
+        return [{"no": i, "at": datetime.fromisoformat(r["at"]), "message": r["message"],
+                 "repeat": Repeat.from_json(r["repeat"])} for i, r in enumerate(rows, start=1)]
 
-    def _insert(self, at: datetime, message: str, created: datetime) -> int:
+    @staticmethod
+    def _saved(r) -> dict[str, Any]:
+        """되돌리기용으로 저장해 둘 한 줄."""
+        return {"at": r["at"], "message": r["message"], "repeat": r["repeat"]}
+
+    def _insert(self, at: datetime, message: str, created: datetime, repeat: Repeat | None = None) -> int:
         cur = self.ctx.storage.execute(
-            "INSERT INTO reminders(kind, at, message, created) VALUES(?, ?, ?, ?)",
-            (self.kind, iso(at), message, iso(created)))
+            "INSERT INTO reminders(kind, at, message, created, repeat) VALUES(?, ?, ?, ?, ?)",
+            (self.kind, iso(at), message, iso(created), repeat.to_json() if repeat else None))
         rid = cur.lastrowid
         self._arm(rid, at)
         return rid
@@ -83,11 +91,18 @@ class _Scheduled(Skill):
         rows = self.ctx.storage.query("SELECT * FROM reminders WHERE id = ? AND delivered = 0", (rid,))
         if not rows:
             return
-        self.ctx.storage.execute("UPDATE reminders SET delivered = 1 WHERE id = ?", (rid,))
-        self.jobs.pop(rid, None)
         r = rows[0]
-        self.ctx.notify([Result(f"{self.kind}.done", {"at": datetime.fromisoformat(r["at"]),
-                                                      "message": r["message"]}, core=("message",))],
+        at = datetime.fromisoformat(r["at"])
+        rep = Repeat.from_json(r["repeat"])
+        self.jobs.pop(rid, None)
+        if rep is not None:
+            nxt = rep.next_after(self.ctx.clock(), prev=at)
+            self.ctx.storage.execute("UPDATE reminders SET at = ? WHERE id = ?", (iso(nxt), rid))
+            self._arm(rid, nxt)
+        else:
+            self.ctx.storage.execute("UPDATE reminders SET delivered = 1 WHERE id = ?", (rid,))
+        self.ctx.notify([Result(f"{self.kind}.done", {"at": at, "message": r["message"], "repeat": rep},
+                                core=("message",))],
                         beeps=3 if self.kind == "alarm" else 1)
 
     def __init__(self, ctx):
@@ -99,9 +114,15 @@ class _Scheduled(Skill):
         missed = []
         for r in self._rows():
             at = datetime.fromisoformat(r["at"])
+            rep = Repeat.from_json(r["repeat"])
             if at <= now:
-                missed.append({"at": at, "message": r["message"]})
-                self.ctx.storage.execute("UPDATE reminders SET delivered = 1 WHERE id = ?", (r["id"],))
+                missed.append({"at": at, "message": r["message"], "repeat": rep})
+                if rep is not None:             # 반복은 한 번만 알리고 다음 시각으로
+                    at = rep.next_after(now, prev=at)
+                    self.ctx.storage.execute("UPDATE reminders SET at = ? WHERE id = ?", (iso(at), r["id"]))
+                    self._arm(r["id"], at)
+                else:
+                    self.ctx.storage.execute("UPDATE reminders SET delivered = 1 WHERE id = ?", (r["id"],))
             else:
                 self._arm(r["id"], at)
         if not missed:
@@ -147,8 +168,9 @@ class _Scheduled(Skill):
                           item_key=f"{self.kind}.item")
         at = datetime.fromisoformat(target["at"])
         self._delete(target["id"])
-        return Result(f"{self.kind}.cancel", {"at": at, "message": target["message"]}, core=("at", "message"),
-                      undo={"op": "restore", "rows": [{"at": target["at"], "message": target["message"]}]},
+        return Result(f"{self.kind}.cancel", {"at": at, "message": target["message"],
+                                              "repeat": Repeat.from_json(target["repeat"])},
+                      core=("at", "message"), undo={"op": "restore", "rows": [self._saved(target)]},
                       undo_label=f"{self.kind}.cancel")
 
     def _clear(self) -> Result | Confirm:
@@ -161,7 +183,7 @@ class _Scheduled(Skill):
             for r in current:
                 self._delete(r["id"])
             return Result(f"{self.kind}.clear", {"count": len(current)}, core=("count",),
-                          undo={"op": "restore", "rows": [{"at": r["at"], "message": r["message"]} for r in current]},
+                          undo={"op": "restore", "rows": [self._saved(r) for r in current]},
                           undo_label=f"{self.kind}.clear")
         return Confirm(f"confirm.{self.kind}_clear", do_clear, {"count": len(rows)}, core=("count",),
                        items=self._items(rows), item_key=f"{self.kind}.item")
@@ -174,10 +196,13 @@ class _Scheduled(Skill):
         skipped = 0
         for r in payload["rows"]:
             at = datetime.fromisoformat(r["at"])
+            rep = Repeat.from_json(r.get("repeat"))
+            if at <= now and rep is not None:
+                at = rep.next_after(now, prev=at)
             if at <= now:
                 skipped += 1
                 continue
-            self._insert(at, r["message"], now)
+            self._insert(at, r["message"], now, rep)
         if skipped and skipped == len(payload["rows"]):
             return Result("undo.expired", ok=False)
         return Result("undo.done")
@@ -186,6 +211,8 @@ class _Scheduled(Skill):
         slots: dict[str, Any] = {}
         if req.time.at is not None and req.time.error is None:
             slots["at"] = req.time.at
+        if req.time.repeat is not None and req.time.at is not None:
+            slots["repeat"] = req.time.repeat
         m = NO_RE.search(req.text)
         if m:
             slots["index"] = int(m.group(1))
@@ -222,9 +249,12 @@ class ReminderSkill(_Scheduled):
         if intent == "reminder.set":
             at: datetime = slots["at"]
             message = slots.get("message") or ""
-            rid = self._insert(at, message, req.now)
-            return Result("reminder.set", {"at": at, "message": message, "assumed": req.time.assumed},
-                          core=("at", "message"), undo={"op": "delete", "id": rid}, undo_label="reminder.set")
+            rep = slots.get("repeat")
+            rid = self._insert(at, message, req.now, rep)
+            return Result("reminder.set_repeat" if rep else "reminder.set",
+                          {"at": at, "message": message, "repeat": rep, "assumed": req.time.assumed},
+                          core=("repeat", "message") if rep else ("at", "message"),
+                          undo={"op": "delete", "id": rid}, undo_label="reminder.set")
         if intent == "reminder.list":
             return self._list()
         if intent == "reminder.cancel":
@@ -256,8 +286,11 @@ class AlarmSkill(_Scheduled):
     def handle(self, intent: str, req, slots: dict[str, Any]) -> Result | Confirm:
         if intent == "alarm.set":
             at: datetime = slots["at"]
-            rid = self._insert(at, "", req.now)
-            return Result("alarm.set", {"at": at, "assumed": req.time.assumed}, core=("at",),
+            rep = slots.get("repeat")
+            rid = self._insert(at, "", req.now, rep)
+            return Result("alarm.set_repeat" if rep else "alarm.set",
+                          {"at": at, "repeat": rep, "assumed": req.time.assumed},
+                          core=("repeat", "at") if rep else ("at",),
                           undo={"op": "delete", "id": rid}, undo_label="alarm.set")
         if intent == "alarm.list":
             return self._list()

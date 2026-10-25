@@ -77,8 +77,62 @@ def test_reminder_cancel_by_keyword(app):
 
 
 def test_time_error_message(app):
-    assert "반복" in app.say("매일 7시 알람")
+    assert "매달" in app.say("매달 1일 월세 내라고 알려줘")      # 지원 안 하는 반복은 무엇이 되는지 안내
     assert "지났다" in app.say("오늘 1시 알람")
+
+
+# ── 반복 리마인더 / 알람 ──
+def test_repeat_reminder_fires_and_reschedules(app):
+    out = app.say("매일 아침 8시에 약 먹으라고 알려줘")
+    assert "매일 오전 8:00" in out and "약 먹기" in out
+    fired = app.tick(hours=18)                                              # 10/21 08:00
+    assert len(fired) == 1 and "약 먹기" in fired[0]
+    assert "10/22(목) 오전 8:00" in app.say("리마인더 뭐 있어")          # 다음 날로 넘어감
+    assert len(app.tick(days=1)) == 1                                       # 10/22 08:00 또 울림
+
+
+def test_repeat_weekdays_skips_weekend(make_app):
+    from datetime import datetime
+    app = make_app(now=datetime(2026, 10, 23, 12, 0))                       # 금요일 낮
+    app.say("평일마다 7시 알람 맞춰줘")
+    assert "10/26(월) 오전 7:00" in app.say("알람 목록")
+
+
+def test_repeat_interval(app):
+    app.say("30분마다 물 마시라고 알려줘")
+    assert len(app.tick(minutes=30)) == 1
+    assert len(app.tick(minutes=30)) == 1
+    assert "물 마시기" in app.say("리마인더 뭐 있어")
+
+
+def test_repeat_missed_while_off_is_reported_once_then_moves_on(make_app, tmp_path):
+    from datetime import datetime
+    db = tmp_path / "j.db"
+    a = make_app(storage=Storage(db))
+    a.say("매일 아침 8시에 약 먹으라고 알려줘")
+    a.ctx.storage.close()
+    b = make_app(storage=Storage(db), now=datetime(2026, 10, 23, 9, 0))      # 3일 꺼져 있었음
+    out = "\n".join(b.d.startup())
+    assert "약 먹기" in out
+    assert "10/24(토) 오전 8:00" in b.say("리마인더 뭐 있어")              # 다음 회차로 넘어가 있음
+    c = make_app(storage=Storage(db), now=datetime(2026, 10, 23, 9, 30))
+    assert "놓친" not in "\n".join(c.d.startup())                         # 같은 걸 두 번 알리지 않음
+
+
+def test_repeat_cancel_and_undo(app):
+    app.say("평일마다 9시에 출근하라고 알려줘")
+    app.say("출근 리마인더 취소")
+    assert "없다" in app.say("리마인더 뭐 있어")
+    app.say("되돌려줘")
+    app.say("응")
+    assert "평일 오전 9:00" in app.say("리마인더 뭐 있어")
+
+
+def test_repeat_without_time_asks(app):
+    out = app.say("매일 약 먹으라고 알려줘")
+    assert "언제" in out
+    out = app.say("저녁 9시")
+    assert "매일 오후 9:00" in out and "약 먹기" in out
 
 
 @pytest.mark.parametrize("text,spans_text,want", [
@@ -188,7 +242,7 @@ def test_volume_unsupported(analyzer):
 def test_open_app_and_folder(app):
     app.say("메모장 켜줘")
     app.say("다운로드 폴더 열어")
-    assert app.platform.launcher.opened == ["notepad.exe", "~/Downloads"]
+    assert app.platform.launcher.opened == ["notepad.exe", "known:Downloads"]
 
 
 def test_unknown_app_not_launched(app):

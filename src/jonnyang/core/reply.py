@@ -13,6 +13,7 @@ class Reply:
     waiting: bool = False                     # 사용자 대답을 기다림 (확인/되묻기/슬롯)
     choices: list[tuple[str, str]] = field(default_factory=list)   # (버튼 글자, 보낼 말)
     alert: bool = False                       # 타이머 종료 같은 알림. 사용자가 볼 때까지 유지
+    running: bool = False                     # 인터넷 응답 기다리는 중. 결과가 오면 바뀐다
 
     def __str__(self) -> str:
         return self.text

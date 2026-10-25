@@ -82,11 +82,14 @@ def main(out: Path) -> None:
     shot(win, out / "pet-alert.png")
 
     painter = CatPainter(ctx.persona.appearance)
-    sheet = QImage(180 * 4, 170 * 2, QImage.Format.Format_ARGB32)
+    cols = 5
+    rows = (len(POSES) + cols - 1) // cols
+    sheet = QImage(180 * cols, 170 * rows, QImage.Format.Format_ARGB32)
     sheet.fill(QColor(0, 0, 0, 0))
     p = QPainter(sheet)
     for i, pose in enumerate(POSES):
-        painter.paint(p, QRectF((i % 4) * 180, (i // 4) * 170, 180, 162), CatFrame(pose=pose, t=1.0, pose_t=5.0))
+        painter.paint(p, QRectF((i % cols) * 180, (i // cols) * 170, 180, 162),
+                      CatFrame(pose=pose, t=1.0, pose_t=5.0))
     p.end()
     sheet.save(str(out / "pet-poses.png"))
     win.shutdown()

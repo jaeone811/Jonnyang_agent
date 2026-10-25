@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 from typing import Any
 
+from jonnyang.nlu.timeparse import Repeat
+
 WEEKDAY_KO = "월화수목금토일"
 
 
@@ -51,6 +53,17 @@ def when(dt: datetime, now: datetime) -> str:
     return f"{prefix}{d.month}/{d.day}({wd}) {clock(dt)}"
 
 
+def repeat(r: Repeat) -> str:
+    """'🔁 매일 오전 8:00', '🔁 매주 월·수 오후 3:00', '🔁 30분마다' (이모지 끄면 이모지만 빠진다)"""
+    if r.kind == "interval":
+        return f"🔁 {duration(timedelta(seconds=r.seconds))}마다"
+    t = clock(datetime(2000, 1, 1, r.hour, r.minute))
+    label = {"daily": "매일", "weekdays": "평일", "weekends": "주말"}.get(r.kind)
+    if label is None:
+        label = "매주 " + "·".join(WEEKDAY_KO[d] for d in r.days)
+    return f"🔁 {label} {t}"
+
+
 def number(v: int | float) -> str:
     if isinstance(v, bool):
         return str(v)
@@ -79,6 +92,8 @@ def value(key: str, v: Any, now: datetime) -> str:
         return duration(v)
     if isinstance(v, (list, tuple)):
         return ", ".join(value(key, x, now) for x in v)
+    if isinstance(v, Repeat):
+        return repeat(v)
     if isinstance(v, Bytes):
         return size(int(v))
     if isinstance(v, (int, float)) and not isinstance(v, bool):

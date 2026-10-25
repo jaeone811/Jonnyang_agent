@@ -104,7 +104,9 @@ class AppSkill(Skill):
         super().__init__(ctx)
         self.intents = [
             Intent("app.open", nouns={"앱": 0.2, "프로그램": 0.2, "폴더": 0.2}, verbs={"OPEN": 0.4},
-                   avoid={"CLOSE": 0.5, "CANCEL": 0.5}, hint=lambda req: 0.6 * self.find(req)[1],
+                   avoid={"CLOSE": 0.5, "CANCEL": 0.5, "찾": 0.4, "정리": 0.5, "옮기": 0.5, "이동": 0.5,
+                          "휴지통": 0.5, "버리": 0.5},
+                   hint=lambda req: 0.6 * self.find(req)[1],
                    examples=("메모장 켜줘", "다운로드 폴더 열어", "계산기 실행")),
         ]
 
@@ -137,6 +139,11 @@ class AppSkill(Skill):
         if not name:
             return Result("app.not_found", {"text": req.text}, ok=False)
         kind, target = self.ctx.aliases.resolve(name)
+        if kind == "folder":
+            try:
+                target = str(self.ctx.platform.files.folder(target))
+            except Unsupported:
+                pass
         try:
             self.ctx.platform.launcher.open(target)
         except Unsupported:

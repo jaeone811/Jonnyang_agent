@@ -28,6 +28,11 @@ jobs:
           QT_QPA_PLATFORM: offscreen
           PYTHONUTF8: "1"
         run: python -m pytest -q -rs
+      - name: Live internet check (참고용, 외부 서버 상태에 따라 실패해도 빌드는 진행)
+        continue-on-error: true
+        env:
+          PYTHONUTF8: "1"
+        run: python tools/live_check.py
 
   build:
     needs: test

@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 import re
 import sys
+import uuid
+from pathlib import Path
 
 import psutil
 
@@ -85,6 +87,61 @@ class UnsupportedLauncher:
         raise Unsupported("launcher")
 
 
+# Windows Known Folder ID (KnownFolders.h). 바탕화면·문서가 OneDrive로 옮겨져 있어도 실제 위치를 알려준다.
+KNOWN_FOLDERS = {
+    "Desktop": "B4BFCC3A-DB2C-424C-B029-7FE99A87C641",
+    "Documents": "FDD39AD0-238F-46AF-ADB4-6C85480369C7",
+    "Downloads": "374DE290-123F-4565-9164-39C4925E467B",
+    "Music": "4BD8D571-6D19-48D3-BE97-422220080E43",
+    "Pictures": "33E28130-4E1E-4676-835A-98395C3BC3BB",
+    "Videos": "18989B1D-99B5-455B-841C-AB7C74E4DDFC",
+}
+
+
+def _known_folder_windows(name: str) -> Path | None:
+    import ctypes
+    from ctypes import wintypes
+
+    class GUID(ctypes.Structure):
+        _fields_ = [("Data1", wintypes.DWORD), ("Data2", wintypes.WORD), ("Data3", wintypes.WORD),
+                    ("Data4", ctypes.c_ubyte * 8)]
+
+    u = uuid.UUID(KNOWN_FOLDERS[name])
+    guid = GUID(u.fields[0], u.fields[1], u.fields[2], (ctypes.c_ubyte * 8)(*u.bytes[8:]))
+    out = ctypes.c_wchar_p()
+    shell32 = ctypes.windll.shell32   # type: ignore[attr-defined]
+    hr = shell32.SHGetKnownFolderPath(ctypes.byref(guid), 0, None, ctypes.byref(out))
+    try:
+        return Path(out.value) if hr == 0 and out.value else None
+    finally:
+        ctypes.windll.ole32.CoTaskMemFree(out)   # type: ignore[attr-defined]
+
+
+def resolve_folder(target: str) -> Path:
+    """'known:Downloads' → 실제 다운로드 폴더, '~/x'·'%USERPROFILE%\\x' → 펼친 경로."""
+    if target.startswith("known:"):
+        name = target.split(":", 1)[1]
+        if sys.platform == "win32" and name in KNOWN_FOLDERS:
+            try:
+                found = _known_folder_windows(name)
+            except OSError:
+                found = None
+            if found:
+                return found
+        return Path.home() / name
+    return Path(os.path.normpath(os.path.expandvars(os.path.expanduser(target))))
+
+
+class SystemFiles:
+    def folder(self, target: str) -> Path:
+        return resolve_folder(target)
+
+    def trash(self, paths: list[str]) -> None:
+        from send2trash import send2trash
+
+        send2trash(paths)
+
+
 class WindowsBeeper:
     def beep(self) -> None:
         import winsound
@@ -100,5 +157,5 @@ class BellBeeper:
 
 def system_platform() -> Platform:
     if sys.platform == "win32":
-        return Platform(WindowsVolume(), WindowsLauncher(), PsutilSysInfo(), WindowsBeeper())
-    return Platform(UnsupportedVolume(), UnsupportedLauncher(), PsutilSysInfo(), BellBeeper())
+        return Platform(WindowsVolume(), WindowsLauncher(), PsutilSysInfo(), WindowsBeeper(), SystemFiles())
+    return Platform(UnsupportedVolume(), UnsupportedLauncher(), PsutilSysInfo(), BellBeeper(), SystemFiles())

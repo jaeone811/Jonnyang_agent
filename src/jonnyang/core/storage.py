@@ -47,6 +47,10 @@ SCHEMA = [
         undone INTEGER NOT NULL DEFAULT 0
     );
     """,
+    # version 2: 반복 리마인더/알람 ("매일 아침 8시"). JSON (nlu.timeparse.Repeat), 한 번짜리는 NULL
+    """
+    ALTER TABLE reminders ADD COLUMN repeat TEXT;
+    """,
 ]
 
 

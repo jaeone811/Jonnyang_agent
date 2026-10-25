@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Callable
 
 from jonnyang.core.context import AppContext
 from jonnyang.core.reply import Reply
@@ -65,6 +65,9 @@ class Dispatcher:
         self.clarify_th = th.get("clarify", 0.4)
         self.pending_ttl = timedelta(seconds=ctx.settings.get("pending_timeout_sec", 60))
         self.pending: Pending | None = None
+        # GUI가 넣어 준다: 인터넷 스킬을 별도 스레드에서 돌리고 결과를 나중에 화면에 띄운다.
+        # None이면 바로 실행한다(CLI, 테스트).
+        self.runner: Callable[[Callable[[], list[Reply]]], None] | None = None
 
     def _protected(self) -> set[str]:
         return set().union(*(s.protected_words() for s in self.ctx.skills.values()))
@@ -169,11 +172,28 @@ class Dispatcher:
 
     def _execute(self, intent: Intent, req: Request, slots: dict[str, Any], now: datetime) -> list[Reply]:
         skill = self.ctx.skills[intent.skill]
+        if self.runner is not None and skill.runs_async(intent.name):
+            return self._execute_async(skill, intent, req, slots, now)
         out = skill.handle(intent.name, req, slots)
         if isinstance(out, Confirm):
             self.pending = Pending("confirm", now, confirm=out, skill=skill.name, intent=intent.name)
             return self._say(out, now)
         return self._finish(skill.name, intent.name, out, now)
+
+    def _execute_async(self, skill, intent: Intent, req: Request, slots: dict[str, Any], now: datetime) -> list[Reply]:
+        def job() -> list[Reply]:
+            try:
+                out = skill.handle(intent.name, req, slots)
+            except Exception as exc:  # 다른 스레드에서 죽으면 아무도 모르니 결과로 돌려준다
+                out = Result("error.internal", {"reason": repr(exc)}, core=("reason",), ok=False)
+            if isinstance(out, Confirm):    # 온라인 스킬은 확인을 묻지 않는다. 혹시 오면 실행하지 않고 알린다
+                out = Result("error.internal", {"reason": "confirm from async skill"}, core=("reason",), ok=False)
+            return self._finish(skill.name, intent.name, out, self.ctx.clock())
+        self.runner(job)
+        service = self.ctx.persona.label(f"service.{getattr(skill, 'service', skill.name)}")
+        replies = self._say(Result("online.loading", {"service": service}, core=("service",)), now)
+        replies[0].running = True
+        return replies
 
     def _finish(self, skill: str, intent: str, res: Result, now: datetime) -> list[Reply]:
         if isinstance(res, Confirm):   # 되돌리기처럼 확인을 한 번 더 요구하는 경우

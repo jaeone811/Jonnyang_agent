@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jonnyang"
-version = "0.1.0"
+version = "0.2.0"
 description = "존냥이: 규칙 기반 한국어 개인 비서 (Windows)"
 requires-python = ">=3.10"
 dependencies = [
@@ -13,6 +13,8 @@ dependencies = [
     "psutil>=7.0",
     "pyyaml>=6.0",
     "PySide6-Essentials>=6.9",
+    "feedparser>=6.0.11",
+    "send2trash>=1.8.3",
     "pycaw>=20251023; sys_platform == 'win32'",
 ]
 

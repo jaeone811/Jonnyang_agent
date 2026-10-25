@@ -27,6 +27,13 @@ def test_time(case):
         assert r.relative == case["relative"], detail
     for a in case.get("assumed", []):
         assert a in r.assumed, detail
+    if "repeat" in case:
+        assert r.repeat is not None, detail
+        for k, v in case["repeat"].items():
+            got = getattr(r.repeat, k)
+            assert (list(got) if isinstance(got, tuple) else got) == v, f"{k}: {r.repeat}"
+    else:
+        assert r.repeat is None, detail
 
 
 @pytest.mark.parametrize("now,text,want", [

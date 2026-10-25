@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from jonnyang.nlu.normalize import AUX_VERBS, Morph
 
 PRED_TAGS = ("VV", "VA", "XSV", "XSA", "VCP")
+# 명령이 될 수 없는 상태 서술어. "내일 비 안 와?", "밖에 안 추워?"는 부정 명령이 아니라 질문이다.
+STATE_VERBS = {"오", "내리", "춥", "덥", "좋", "나쁘", "괜찮", "맑", "흐리", "불"}
 
 
 @dataclass
@@ -56,7 +58,7 @@ def detect(morphs: list[Morph]) -> Polarity:
                 pol.excluded_spans.append((morphs[j].start, nxt.end))
         elif m.form in ("안", "못") and m.tag.startswith("MAG"):
             after = [k for k in preds if k > i]
-            if after and after[0] == last:
+            if after and after[0] == last and morphs[last].form not in STATE_VERBS:
                 pol.negated = True
             if any(_is_permission(morphs, k) for k in range(i + 1, len(morphs))):
                 pol.negated = True

@@ -8,7 +8,13 @@
 - {text: "알렴 7시", intent: alarm.set, tags: [오타]}
 - {text: "내일 일곱 시에 알람 좀 걸어줄래", intent: alarm.set, slots: {at: "2026-10-21T07:00"}, tags: [어미변형, 한글수사]}
 - {text: "알람 맞춰", expect: ask_slot, intent: alarm.set, tags: [슬롯누락]}
-- {text: "매일 7시 알람", expect: time_error, intent: alarm.set, tags: [한계]}
+- {text: "매일 7시 알람", intent: alarm.set, slots: {at: "2026-10-21T07:00"}, tags: [반복]}
+- {text: "매일 아침 7시에 깨워줘", intent: alarm.set, slots: {at: "2026-10-21T07:00"}, tags: [반복]}
+- {text: "평일마다 9시에 출근하라고 알려줘", intent: reminder.set, slots: {at: "2026-10-21T09:00", message: 출근하기}, tags: [반복]}
+- {text: "30분마다 물 마시라고 알려줘", intent: reminder.set, slots: {at: "2026-10-20T14:30", message: 물 마시기}, tags: [반복]}
+- {text: "매주 월요일 10시에 회의 알려줘", intent: reminder.set, slots: {at: "2026-10-26T10:00"}, tags: [반복]}
+- {text: "매일 약 먹으라고 알려줘", expect: ask_slot, intent: reminder.set, tags: [반복]}
+- {text: "매달 1일 월세 내라고 알려줘", expect: time_error, intent: reminder.set, tags: [한계]}
 - {text: "오늘 1시 알람", expect: time_error, intent: alarm.set, tags: [한계]}
 - {text: "알람 맞추지 마", expect: negated, tags: [부정]}
 - {text: "알람 뭐 있어", intent: alarm.list, tags: [정상]}

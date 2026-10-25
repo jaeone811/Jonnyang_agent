@@ -150,3 +150,81 @@ def test_bubble_is_plain_text(pet):
     assert "<b>굵게</b>" in win.bubble.body.text()   # HTML로 해석하지 않고 그대로 보여준다
     from PySide6.QtCore import Qt
     assert win.bubble.body.textFormat() == Qt.TextFormat.PlainText
+
+
+def _fire(app, qapp, seconds):
+    import threading
+    app.clock.now += timedelta(seconds=seconds)
+    t = threading.Thread(target=app.ctx.scheduler.run_pending)
+    t.start()
+    t.join()
+    qapp.processEvents()
+
+
+def test_alerts_back_to_back_are_merged_not_overwritten(pet, qapp):
+    win, app = pet
+    win.submit("라면 타이머 10초")
+    win.submit("계란 타이머 12초")
+    _fire(app, qapp, 11)
+    _fire(app, qapp, 2)
+    text = win.bubble.text()
+    assert "라면" in text and "계란" in text          # 첫 알림이 두 번째에 덮여 사라지지 않는다
+
+
+def test_alert_during_confirm_restores_question(pet, qapp):
+    win, app = pet
+    win.submit("10초 타이머")
+    win.submit("쇼핑 목록에 우유 추가해")
+    win.submit("쇼핑 목록 비워줘")
+    question = win.bubble.text()
+    _fire(app, qapp, 11)
+    assert win.bubble.state == "alert"
+    win.on_cat_clicked()                              # 알림 확인
+    assert win.bubble.state == "needs_input" and win.bubble.text() == question
+    win.bubble.choice.emit("응")
+    assert "비웠다" in win.bubble.text()
+
+
+def test_reply_time_scales_with_length(pet):
+    win, _ = pet
+    assert win.reply_seconds("짧음") == 4.0
+    assert 4.0 < win.reply_seconds("가" * 100) < 25.0
+    assert win.reply_seconds("가" * 2000) == 25.0
+
+
+def test_hover_keeps_reply_then_grace(pet):
+    win, _ = pet
+    win.submit("3 더하기 4")
+    win.bubble.hovering = True
+    win.mono_fake.t += 60
+    win.tick()
+    assert win.mode == "reply"
+    win.bubble.hovering = False
+    win.tick()
+    assert win.mode == "reply"                       # 마우스를 뗀 직후엔 조금 더 보여준다
+    win.mono_fake.t += 3
+    win.tick()
+    assert win.mode != "reply"
+
+
+def test_online_reply_runs_in_background(qapp, make_app):
+    import time as _time
+
+    from test_online import FORECAST, FORECAST_JSON
+    app = make_app(routes={FORECAST: FORECAST_JSON})
+    win = PetWindow(app.ctx.persona, app.ctx.storage, tray=False)
+    mono = Mono()
+    win.mono = win.cat.mono = mono
+    win.show()
+    win.attach(app.ctx, app.d)
+    try:
+        win.submit("오늘 날씨 어때")
+        assert win.bubble.state == "running" and win.cat.pose == "search"   # 기다리는 동안 노트북 두드리는 표정
+        deadline = _time.monotonic() + 5
+        while "서울" not in win.bubble.text() and _time.monotonic() < deadline:
+            qapp.processEvents()
+            _time.sleep(0.01)
+        assert "서울" in win.bubble.text() and win.bubble.state == "ready"
+    finally:
+        win.shutdown()
+        win.close()

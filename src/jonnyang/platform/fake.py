@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from jonnyang.platform.base import BatteryInfo, DiskInfo, Platform
+import shutil
+from pathlib import Path
+
+from jonnyang.platform.base import BatteryInfo, DiskInfo, Platform, Unsupported
 
 
 class FakeVolume:
@@ -56,5 +59,29 @@ class FakeBeeper:
         self.count += 1
 
 
-def fake_platform() -> Platform:
-    return Platform(FakeVolume(), FakeLauncher(), FakeSysInfo(), FakeBeeper())
+class FakeFiles:
+    """임시 폴더 안에서만 동작한다. 'known:Downloads' → root/Downloads, '~' → root. 휴지통은 root/.trash로 옮긴다."""
+
+    def __init__(self, root: Path | None = None):
+        self.root = root
+        self.trashed: list[str] = []
+
+    def folder(self, target: str) -> Path:
+        if self.root is None:
+            raise Unsupported("files")
+        if target.startswith("known:"):
+            return self.root / target.split(":", 1)[1]
+        if target.startswith("~"):
+            return self.root / target[1:].lstrip("/\\")
+        return Path(target)
+
+    def trash(self, paths: list[str]) -> None:
+        bin_dir = self.root / ".trash"
+        bin_dir.mkdir(parents=True, exist_ok=True)
+        for p in paths:
+            shutil.move(p, bin_dir / Path(p).name)
+            self.trashed.append(p)
+
+
+def fake_platform(files_root: Path | None = None) -> Platform:
+    return Platform(FakeVolume(), FakeLauncher(), FakeSysInfo(), FakeBeeper(), FakeFiles(files_root))

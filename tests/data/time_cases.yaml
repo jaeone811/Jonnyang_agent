@@ -45,8 +45,25 @@
 - {text: "다음달 5일", at: "2026-11-05T09:00"}
 - {text: "다음달 31일", error: invalid}
 - {text: "25시", error: invalid}
-- {text: "매일 7시", error: recurring}
-- {text: "평일마다 9시", error: recurring}
+# 반복 (at = 다음에 울릴 시각)
+- {text: "매일 7시", at: "2026-10-21T07:00", repeat: {kind: daily}, assumed: [am]}
+- {text: "매일 3시", at: "2026-10-20T15:00", repeat: {kind: daily}, assumed: [pm]}
+- {text: "매일 아침 8시", at: "2026-10-21T08:00", repeat: {kind: daily}}
+- {text: "날마다 밤 11시", at: "2026-10-20T23:00", repeat: {kind: daily}}
+- {text: "평일마다 9시", at: "2026-10-21T09:00", repeat: {kind: weekdays}}
+- {text: "평일 아침 7시 반에는", at: "2026-10-21T07:30", repeat: {kind: weekdays}}
+- {text: "주말마다 10시", at: "2026-10-24T10:00", repeat: {kind: weekends}}
+- {text: "매주 월요일 10시", at: "2026-10-26T10:00", repeat: {kind: weekly, days: [0]}}
+- {text: "월요일마다 오전 10시", at: "2026-10-26T10:00", repeat: {kind: weekly, days: [0]}}
+- {text: "매주 월, 수, 금 7시", at: "2026-10-21T07:00", repeat: {kind: weekly, days: [0, 2, 4]}}
+- {text: "화요일마다 오후 3시", at: "2026-10-20T15:00", repeat: {kind: weekly, days: [1]}}
+- {text: "30분마다", at: "2026-10-20T14:30", repeat: {kind: interval, seconds: 1800}}
+- {text: "한 시간마다", at: "2026-10-20T15:00", repeat: {kind: interval, seconds: 3600}}
+- {text: "매시간", at: "2026-10-20T15:00", repeat: {kind: interval, seconds: 3600}}
+- {text: "매일", repeat: {kind: daily}}
+- {text: "매달 1일", error: recurring}
+- {text: "격주 월요일", error: recurring}
+- {text: "30분마다 내일 3시", error: multiple, repeat: {kind: interval}}
 - {text: "이따가", error: vague}
 - {text: "3시에서 5시", error: multiple}
 - {text: "내일 화요일", error: multiple}

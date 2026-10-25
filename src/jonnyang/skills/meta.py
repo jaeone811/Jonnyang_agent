@@ -65,6 +65,8 @@ class MetaSkill(Skill):
                hint=lambda req: 0.3 if re.search(r"순하|순한|시크|도도|기본|디시|원래", req.text) else 0.0,
                examples=("말투 시크하게", "말투 순하게")),
         Intent("wake.required", nouns={"호출어": 1.0}, examples=("호출어 꺼", "호출어 켜")),
+        Intent("online.toggle", nouns={"인터넷": 0.7, "온라인": 0.8, "네트워크": 0.6}, extras={"기능": 0.2},
+               hint=lambda req: 0.2 if _onoff(req) is not None else -0.3, examples=("인터넷 기능 꺼",)),
         Intent("chat.greet", nouns={"안녕": 1.0, "하이": 0.9, "헬로": 0.9, "반갑": 0.9, "hi": 0.9, "hello": 0.9},
                examples=("안녕",)),
         Intent("chat.thanks", nouns={"고맙": 1.0, "고마워": 1.0, "감사": 1.0, "땡큐": 1.0, "thanks": 1.0}),
@@ -101,7 +103,7 @@ class MetaSkill(Skill):
             parsed = self._parse_alias(req)
             if parsed:
                 slots["alias"], slots["target"] = parsed
-        elif intent in ("persona.nyang", "persona.emoji", "wake.required"):
+        elif intent in ("persona.nyang", "persona.emoji", "wake.required", "online.toggle"):
             on = _onoff(req)
             if on is not None:
                 slots["enabled"] = on
@@ -118,7 +120,7 @@ class MetaSkill(Skill):
             return self.ctx.undo_last()
         if intent == "meta.alias":
             return self._alias(slots)
-        if intent in ("persona.nyang", "persona.emoji", "wake.required"):
+        if intent in ("persona.nyang", "persona.emoji", "wake.required", "online.toggle"):
             return self._toggle(intent, slots)
         if intent == "persona.profile":
             name = slots.get("profile")
@@ -144,7 +146,7 @@ class MetaSkill(Skill):
                 items.append({"skill": self.ctx.persona.label(f"skill.{skill.name}"),
                               "examples": " / ".join(f"\"{e}\"" for e in examples)})
         items.append({"skill": self.ctx.persona.label("skill.meta"),
-                      "examples": "\"되돌려줘\" / \"메모장을 노트라고 불러\" / \"냥체 꺼\""})
+                      "examples": "\"되돌려줘\" / \"메모장을 노트라고 불러\" / \"냥체 꺼\" / \"인터넷 기능 꺼\""})
         return Result("meta.help", items=items, item_key="meta.help_item")
 
     def _alias(self, slots: dict[str, Any]) -> Result | Confirm:
@@ -169,9 +171,9 @@ class MetaSkill(Skill):
 
     def _toggle(self, intent: str, slots: dict[str, Any]) -> Result:
         key = {"persona.nyang": "persona.nyang", "persona.emoji": "persona.emoji",
-               "wake.required": "wake.required"}[intent]
+               "wake.required": "wake.required", "online.toggle": "online.enabled"}[intent]
         current = {"persona.nyang": self.ctx.persona.nyang, "persona.emoji": self.ctx.persona.emoji,
-                   "wake.required": self.ctx.wake_required}[key]
+                   "wake.required": self.ctx.wake_required, "online.enabled": self.ctx.online_enabled}[key]
         on = slots.get("enabled", not current)
         self.ctx.storage.set_setting(key, on)
         return Result(f"{intent}_{'on' if on else 'off'}", undo={"settings": {key: current}}, undo_label="setting")

@@ -44,21 +44,31 @@ def selftest(out_path: str) -> int:
         from jonnyang.core.config import config_dir, frozen, load_yaml
         from jonnyang.core.storage import Storage
         from jonnyang.gui.painter import CatFrame, CatPainter
-        from jonnyang.platform.system import system_platform
+        from jonnyang.platform.system import resolve_folder, system_platform
 
         app = QApplication.instance() or QApplication(sys.argv[:1])
-        lines.append(f"frozen={frozen()} config_dir={config_dir()} persona_keys={len(load_yaml('persona.yaml'))}")
+        lines.append(f"frozen={frozen()} config_dir={config_dir()} persona_keys={len(load_yaml('persona.yaml'))}"
+                     f" online={bool(load_yaml('online.yaml'))} files={bool(load_yaml('files.yaml'))}")
         _, d = build_app(platform=system_platform(), storage=Storage(":memory:"), rng=random.Random(0))
-        checks = {"3분 타이머": "3분", "40의 15%는?": "6", "쇼핑 목록에 우유 추가해": "우유", "CPU 얼마나 써": "%"}
+        checks = {"3분 타이머": "3분", "40의 15%는?": "6", "쇼핑 목록에 우유 추가해": "우유", "CPU 얼마나 써": "%",
+                  "매일 아침 8시에 약 먹으라고 알려줘": "매일", "인터넷 기능 꺼": "껐", "날씨 어때": "꺼져"}
         for text, want in checks.items():
             out = "\n".join(d.handle(text))
             good = want in out
             ok &= good
             lines.append(f"{'OK ' if good else 'BAD'} {text} -> {out}")
+        import feedparser
+        from send2trash import send2trash  # noqa: F401  (exe에 묶였는지만 본다)
+
+        feed = feedparser.parse(b"<rss version='2.0'><channel><item><title>t1</title></item></channel></rss>")
+        good = len(feed.entries) == 1
+        ok &= good
+        lines.append(f"{'OK ' if good else 'BAD'} feedparser {feedparser.__version__}, send2trash import")
+        lines.append(f"    Downloads folder -> {resolve_folder('known:Downloads')}")
         img = QImage(200, 180, QImage.Format.Format_ARGB32)
         img.fill(QColor(0, 0, 0, 0))
         p = QPainter(img)
-        CatPainter().paint(p, QRectF(0, 0, 200, 180), CatFrame(pose="happy"))
+        CatPainter().paint(p, QRectF(0, 0, 200, 180), CatFrame(pose="search"))
         p.end()
         drawn = img.pixelColor(100, 80).alpha() > 0
         ok &= drawn

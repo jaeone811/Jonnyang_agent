@@ -23,6 +23,7 @@ class Result:
     undo: dict[str, Any] | None = None        # 있으면 history에 기록 → skill.undo(payload)
     undo_label: str | None = None             # persona.undo_labels 키
     ok: bool = True
+    follow: list["Result"] = field(default_factory=list)   # 이어서 붙일 짧은 문장 (예: 우산 챙기라는 말)
 
 
 @dataclass
@@ -50,6 +51,10 @@ class Skill:
 
     def handle(self, intent: str, req: "Request", slots: dict[str, Any]) -> Result | Confirm:
         raise NotImplementedError
+
+    def runs_async(self, intent: str) -> bool:
+        """GUI에서 이 의도를 별도 스레드로 돌릴지 (인터넷 응답을 기다리는 동안 펫이 멈추지 않게)."""
+        return self.requires_network
 
     def undo(self, intent: str, payload: dict[str, Any]) -> Result:
         return Result("undo.unsupported", ok=False)

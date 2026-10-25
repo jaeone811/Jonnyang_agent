@@ -1,0 +1,203 @@
+# 온라인 기능 설정 (사람이 편집하는 파일, 프로그램은 읽기만 함)
+# 인터넷이 없거나 서버가 응답하지 않으면 해당 기능만 "지금은 못 한다"고 안내하고 나머지는 그대로 동작한다.
+
+enabled: true            # false면 온라인 기능을 전부 끈다 ("인터넷 기능 꺼" 명령도 있음, 그쪽이 우선)
+timeout_sec: 6
+
+# ── 날씨·미세먼지: Open-Meteo (API 키 없음, 비상업 무료, 데이터 CC BY 4.0) ──
+weather:
+  forecast_url: https://api.open-meteo.com/v1/forecast
+  air_url: https://air-quality-api.open-meteo.com/v1/air-quality
+  geocode_url: https://geocoding-api.open-meteo.com/v1/search
+  cache_min: 10
+  default_place: 서울     # "우리 동네 부산으로 설정" 명령으로 바꾼 값이 우선
+  # WMO 날씨 코드 → 표시 이름 (https://open-meteo.com/en/docs 의 WMO Weather interpretation codes)
+  codes:
+    0: 맑음
+    1: 대체로 맑음
+    2: 구름 조금
+    3: 흐림
+    45: 안개
+    48: 서리 안개
+    51: 약한 이슬비
+    53: 이슬비
+    55: 강한 이슬비
+    56: 약한 어는 이슬비
+    57: 강한 어는 이슬비
+    61: 약한 비
+    63: 비
+    65: 강한 비
+    66: 약한 어는 비
+    67: 강한 어는 비
+    71: 약한 눈
+    73: 눈
+    75: 강한 눈
+    77: 싸락눈
+    80: 약한 소나기
+    81: 소나기
+    82: 강한 소나기
+    85: 약한 눈보라
+    86: 강한 눈보라
+    95: 뇌우
+    96: 우박 동반 뇌우
+    97: 강한 뇌우
+    99: 강한 우박 동반 뇌우
+  rain_codes: [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 97, 99]
+  snow_codes: [71, 73, 75, 77, 85, 86]
+  umbrella_percent: 50    # 강수 확률이 이 이상이면 우산 챙기라고 한다
+
+# 미세먼지 등급 (환경부 예보 기준, ㎍/㎥ 이하). 2018-03-27 강화된 초미세먼지 기준.
+# Open-Meteo 값은 측정소 실측이 아니라 CAMS 대기 모델 추정치다.
+air_grades:
+  pm10: [[30, 좋음], [80, 보통], [150, 나쁨], [99999, 매우나쁨]]
+  pm2_5: [[15, 좋음], [35, 보통], [75, 나쁨], [99999, 매우나쁨]]
+
+# 지역 이름 → [위도, 경도]. 여기 없는 지역은 Open-Meteo 지오코딩으로 찾는다.
+places:
+  서울: [37.5665, 126.9780]
+  부산: [35.1796, 129.0756]
+  인천: [37.4563, 126.7052]
+  대구: [35.8714, 128.6014]
+  대전: [36.3504, 127.3845]
+  광주: [35.1595, 126.8526]
+  울산: [35.5384, 129.3114]
+  세종: [36.4800, 127.2890]
+  수원: [37.2636, 127.0286]
+  성남: [37.4200, 127.1267]
+  고양: [37.6584, 126.8320]
+  용인: [37.2411, 127.1776]
+  부천: [37.5034, 126.7660]
+  안산: [37.3219, 126.8309]
+  화성: [37.1995, 126.8312]
+  평택: [36.9921, 127.1129]
+  의정부: [37.7381, 127.0337]
+  남양주: [37.6360, 127.2165]
+  파주: [37.7600, 126.7800]
+  김포: [37.6153, 126.7156]
+  창원: [35.2280, 128.6811]
+  김해: [35.2285, 128.8894]
+  진주: [35.1800, 128.1076]
+  통영: [34.8544, 128.4331]
+  청주: [36.6424, 127.4890]
+  충주: [36.9910, 127.9259]
+  제천: [37.1326, 128.1910]
+  천안: [36.8151, 127.1139]
+  전주: [35.8242, 127.1480]
+  군산: [35.9676, 126.7366]
+  여수: [34.7604, 127.6622]
+  순천: [34.9506, 127.4872]
+  목포: [34.8118, 126.3922]
+  포항: [36.0190, 129.3435]
+  경주: [35.8562, 129.2247]
+  안동: [36.5684, 128.7294]
+  구미: [36.1195, 128.3446]
+  강릉: [37.7519, 128.8761]
+  속초: [38.2070, 128.5918]
+  춘천: [37.8813, 127.7298]
+  원주: [37.3422, 127.9202]
+  제주: [33.4996, 126.5312]
+  서귀포: [33.2541, 126.5600]
+  도쿄: [35.6762, 139.6503]
+  오사카: [34.6937, 135.5023]
+  후쿠오카: [33.5904, 130.4017]
+  베이징: [39.9042, 116.4074]
+  상하이: [31.2304, 121.4737]
+  홍콩: [22.3193, 114.1694]
+  타이베이: [25.0330, 121.5654]
+  방콕: [13.7563, 100.5018]
+  다낭: [16.0544, 108.2022]
+  하노이: [21.0278, 105.8342]
+  싱가포르: [1.3521, 103.8198]
+  시드니: [-33.8688, 151.2093]
+  뉴욕: [40.7128, -74.0060]
+  런던: [51.5074, -0.1278]
+  파리: [48.8566, 2.3522]
+place_aliases:
+  제주도: 제주
+  서울시: 서울
+  동경: 도쿄
+  북경: 베이징
+  대만: 타이베이
+
+# ── 환율: Frankfurter v2 (API 키 없음, 각국 중앙은행 기준 환율, 하루 한 번 갱신) ──
+currency:
+  url: https://api.frankfurter.dev/v2/rates
+  cache_min: 60
+  names:              # 말 → 통화 코드 (긴 이름부터 찾는다)
+    미국 달러: USD
+    달러: USD
+    불: USD
+    엔화: JPY
+    엔: JPY
+    유로: EUR
+    위안화: CNY
+    위안: CNY
+    영국 파운드: GBP
+    파운드: GBP
+    홍콩 달러: HKD
+    대만 달러: TWD
+    싱가포르 달러: SGD
+    호주 달러: AUD
+    캐나다 달러: CAD
+    스위스 프랑: CHF
+    프랑: CHF
+    바트: THB
+    베트남 동: VND
+    루피: INR
+    원화: KRW
+    원: KRW
+  display:
+    USD: 달러
+    JPY: 엔
+    EUR: 유로
+    CNY: 위안
+    GBP: 파운드
+    HKD: 홍콩 달러
+    TWD: 대만 달러
+    SGD: 싱가포르 달러
+    AUD: 호주 달러
+    CAD: 캐나다 달러
+    CHF: 스위스 프랑
+    THB: 바트
+    VND: 베트남 동
+    INR: 루피
+    KRW: 원
+  per_100: [JPY, VND]   # 한국에서 100단위로 말하는 통화 ("100엔에 900원")
+
+# ── 위키백과 요약 (MediaWiki Action API, 한국어판) ──
+wiki:
+  url: https://ko.wikipedia.org/w/api.php
+  cache_min: 1440
+  max_chars: 300
+
+# ── 뉴스 (RSS, feedparser) ── 제목과 링크만 보여준다
+news:
+  cache_min: 10
+  max_items: 5
+  feeds:
+    주요: https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko
+    IT: https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=ko&gl=KR&ceid=KR:ko
+    경제: https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=ko&gl=KR&ceid=KR:ko
+    스포츠: https://news.google.com/rss/headlines/section/topic/SPORTS?hl=ko&gl=KR&ceid=KR:ko
+    연예: https://news.google.com/rss/headlines/section/topic/ENTERTAINMENT?hl=ko&gl=KR&ceid=KR:ko
+    세계: https://news.google.com/rss/headlines/section/topic/WORLD?hl=ko&gl=KR&ceid=KR:ko
+    과학: https://news.google.com/rss/headlines/section/topic/SCIENCE?hl=ko&gl=KR&ceid=KR:ko
+    건강: https://news.google.com/rss/headlines/section/topic/HEALTH?hl=ko&gl=KR&ceid=KR:ko
+  topic_words:          # 말 → 위 feeds 키
+    아이티: IT
+    it: IT
+    테크: IT
+    기술: IT
+    경제: 경제
+    주식: 경제
+    증시: 경제
+    스포츠: 스포츠
+    축구: 스포츠
+    야구: 스포츠
+    연예: 연예
+    세계: 세계
+    해외: 세계
+    국제: 세계
+    과학: 과학
+    건강: 건강
+  search_url: https://news.google.com/rss/search?hl=ko&gl=KR&ceid=KR:ko

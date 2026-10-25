@@ -10,6 +10,7 @@ from typing import Callable
 from jonnyang.core.aliases import AliasBook
 from jonnyang.core.config import load_yaml
 from jonnyang.core.history import History
+from jonnyang.core.network import Network
 from jonnyang.core.reply import Reply
 from jonnyang.core.scheduler import Scheduler
 from jonnyang.core.storage import Storage
@@ -23,8 +24,10 @@ class AppContext:
     def __init__(self, *, storage: Storage, platform: Platform, analyzer: Analyzer,
                  clock: Callable[[], datetime] = datetime.now, config_dir=None,
                  sink: Callable[[list[str]], None] | None = None, rng: random.Random | None = None,
-                 beep_gap: float = 0.3):
+                 beep_gap: float = 0.3, network: Network | None = None):
+        self.config_dir = config_dir
         self.settings = load_yaml("settings.yaml", config_dir)
+        self.online = load_yaml("online.yaml", config_dir)
         self.storage = storage
         self.platform = platform
         self.analyzer = analyzer
@@ -37,8 +40,14 @@ class AppContext:
         self.reply_sink: Callable[[list[Reply]], None] | None = None   # GUI용 (스케줄러 스레드에서 불림)
         self.skills: dict[str, Skill] = {}
         self.beep_gap = beep_gap
+        self.network = network or Network(float(self.online.get("timeout_sec", 6)))
+        self.network.enabled = lambda: self.online_enabled
         for name in self.aliases.names():
             analyzer.add_word(name)
+
+    @property
+    def online_enabled(self) -> bool:
+        return bool(self.storage.get_setting("online.enabled", self.online.get("enabled", True)))
 
     @property
     def wake_required(self) -> bool:

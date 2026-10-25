@@ -4,6 +4,9 @@
 - 말풍선: 평소엔 지금 하는 일(타이머 남은 시간, 다음 알람, 대답 대기)을 보여주고,
   명령을 처리하면 응답을 잠깐 보여준 뒤 다시 상태 표시로 돌아간다. 알림(타이머 끝 등)은 확인할 때까지 남는다.
 - 스케줄러 스레드의 알림은 Signal로 GUI 스레드에 넘긴다 (Qt 위젯은 GUI 스레드에서만 만진다).
+- 잔상 방지: Windows의 투명 창은 알파 0 픽셀을 원래 클릭이 통과하므로 setMask를 쓰지 않는다
+  (레이어드 창 + 창 영역을 같이 쓰면 지난 말풍선 글자가 남아 겹쳐 보일 수 있다). 말풍선 그림자도 QGraphicsEffect 대신
+  직접 그리고, 말풍선이 바뀔 때마다 창 전체를 다시 그린다.
 - 대사·문구·색·표정 규칙은 전부 persona.yaml에서 온다.
 """
 
@@ -11,6 +14,7 @@ from __future__ import annotations
 
 import math
 import random
+import sys
 import threading
 import time
 from typing import Callable
@@ -32,7 +36,6 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QApplication,
-    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -56,6 +59,10 @@ INPUT_H = 36
 BUBBLE_MAX_W = 310
 BUBBLE_MAX_TEXT_H = 220
 IDLE_BUBBLE_SEC = 6.0          # 할 일 없을 때 대기 문구를 보여주는 시간
+REPLY_MIN_SEC, REPLY_MAX_SEC = 4.0, 25.0
+REPLY_SEC_PER_CHAR = 0.07      # 한국어 읽는 속도 대략 초당 14자
+HOVER_GRACE_SEC = 2.0          # 말풍선에서 마우스를 뗀 뒤 조금 더 보여준다
+USE_MASK = sys.platform != "win32"   # Windows는 투명 픽셀이 원래 클릭을 통과시킨다
 SLEEP_AFTER_SEC = 10 * 60      # 이만큼 조용하면 잠든다
 DRAG_THRESHOLD = 4
 
@@ -73,6 +80,7 @@ class Bridge(QObject):
     ready = Signal(object, object)       # ctx, dispatcher
     failed = Signal(str)
     notified = Signal(object)            # list[Reply]
+    finished = Signal(object)            # list[Reply] 인터넷 스킬 결과 (작업 스레드에서)
 
 
 # ───────────────────────── 고양이 ─────────────────────────
@@ -201,6 +209,7 @@ class Bubble(QWidget):
 
     TAIL = 12
     PAD = 14
+    SHADOW = 4
 
     def __init__(self, colors: dict, labels: Callable[[str], str], parent: QWidget | None = None):
         super().__init__(parent)
@@ -231,17 +240,12 @@ class Bubble(QWidget):
         self.buttons_layout.setSpacing(6)
 
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(self.PAD, 10, self.PAD, 10 + self.TAIL)
+        lay.setContentsMargins(self.PAD + self.SHADOW, 10 + self.SHADOW, self.PAD + self.SHADOW,
+                               10 + self.TAIL + 2 * self.SHADOW)
         lay.setSpacing(4)
         lay.addWidget(self.header)
         lay.addWidget(self.scroll)
         lay.addWidget(self.buttons)
-
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(18)
-        shadow.setOffset(0, 3)
-        shadow.setColor(QColor(0, 0, 0, 70))
-        self.setGraphicsEffect(shadow)
         self.hide()
 
     def text(self) -> str:
@@ -261,6 +265,7 @@ class Bubble(QWidget):
         while self.buttons_layout.count():
             w = self.buttons_layout.takeAt(0).widget()
             if w:
+                w.hide()              # deleteLater 전까지 옛 버튼이 새 글자 위에 남지 않게
                 w.deleteLater()
         for label, answer in choices or []:
             b = QPushButton(label, self.buttons)
@@ -276,13 +281,16 @@ class Bubble(QWidget):
         self.buttons_layout.addStretch(1)
         self.buttons.setVisible(bool(choices))
         self._resize()
+        self.scroll.verticalScrollBar().setValue(0)
+        self.update()
 
     def _resize(self) -> None:
         fm = QFontMetrics(self.body.font())
         widest = max((fm.horizontalAdvance(line) for line in self._text.split("\n")), default=0)
-        inner = max(120, min(BUBBLE_MAX_W - 2 * self.PAD, widest + 8))
+        limit = BUBBLE_MAX_W - 2 * (self.PAD + self.SHADOW)
+        inner = max(120, min(limit, widest + 8))
         if self.buttons.isVisible():
-            inner = max(inner, min(BUBBLE_MAX_W - 2 * self.PAD, self.buttons.sizeHint().width()))
+            inner = max(inner, min(limit, self.buttons.sizeHint().width()))
         self.body.setFixedWidth(inner - 2)
         text_h = self.body.heightForWidth(inner - 2)
         self.scroll.setFixedSize(inner, min(BUBBLE_MAX_TEXT_H, text_h + 2))
@@ -294,7 +302,8 @@ class Bubble(QWidget):
     def paintEvent(self, event) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        r = QRectF(self.rect()).adjusted(1.5, 1.5, -1.5, -1.5 - self.TAIL)
+        sh = self.SHADOW
+        r = QRectF(self.rect()).adjusted(1.5 + sh, 1.5 + sh, -1.5 - sh, -1.5 - self.TAIL - 2 * sh)
         path = QPainterPath()
         path.addRoundedRect(r, 16, 16)
         tx = max(r.left() + 24, min(r.right() - 24, self.width() * self.tail_x))
@@ -304,6 +313,10 @@ class Bubble(QWidget):
         tail.lineTo(tx + 10, r.bottom() - 1)
         tail.closeSubpath()
         path = path.united(tail)
+        p.setPen(Qt.PenStyle.NoPen)
+        for i, alpha in enumerate((14, 18, 24)):     # 부드러운 그림자 (위젯 영역 안에서만)
+            p.setBrush(QColor(40, 30, 90, alpha))
+            p.drawPath(path.translated(0, 1 + i * 1.2))
         p.setPen(QPen(QColor(self.colors.get("bubble_border", "#EADBC6")), 1.5))
         p.setBrush(QColor(self.colors.get("bubble_bg", "#FFFDF8")))
         p.drawPath(path)
@@ -323,16 +336,19 @@ class Bubble(QWidget):
 class InputBar(QLineEdit):
     focus_changed = Signal(bool)
 
-    def __init__(self, parent: QWidget | None = None):
+    def __init__(self, colors: dict, parent: QWidget | None = None):
         super().__init__(parent)
         self.history: list[str] = []
         self._hist_i = 0
         self.setFont(ui_font(13))
         self.setFixedHeight(INPUT_H)
+        bg = QColor(colors.get("bubble_bg", "#FFFDF8"))
         self.setStyleSheet(
-            "QLineEdit { background: rgba(255, 253, 248, 240); color: #2B2622; border: 1.5px solid #EADBC6;"
+            f"QLineEdit {{ background: rgba({bg.red()}, {bg.green()}, {bg.blue()}, 240);"
+            f" color: {colors.get('bubble_text', '#2B2622')};"
+            f" border: 1.5px solid {colors.get('bubble_border', '#EADBC6')};"
             " border-radius: 17px; padding: 0 14px; }"
-            "QLineEdit:focus { border: 1.5px solid #F0A04B; }")
+            f"QLineEdit:focus {{ border: 1.5px solid {colors.get('input_focus', '#F0A04B')}; }}")
 
     def remember(self, text: str) -> None:
         if text and (not self.history or self.history[-1] != text):
@@ -376,6 +392,7 @@ class PetWindow(QWidget):
         self.bridge.ready.connect(self.attach)
         self.bridge.failed.connect(self._backend_failed)
         self.bridge.notified.connect(self.on_notify)
+        self.bridge.finished.connect(self.on_finished)
 
         self.setWindowTitle(persona.ui("tray.tooltip"))
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
@@ -386,7 +403,7 @@ class PetWindow(QWidget):
         colors = persona.appearance
         self.cat = CatWidget(CatPainter(colors), self)
         self.bubble = Bubble(colors, persona.ui, self)
-        self.input = InputBar(self)
+        self.input = InputBar(colors, self)
         self.input.setPlaceholderText(persona.ui("placeholder"))
         self.input.setEnabled(False)
 
@@ -406,6 +423,9 @@ class PetWindow(QWidget):
         self.mode = "hidden"
         self.sticky = False              # 대답 대기나 알림이면 확인할 때까지 유지
         self.deadline = 0.0
+        self._was_hovering = False
+        self._current_choices: list[tuple[str, str]] = []
+        self._saved_question: tuple[str, list[tuple[str, str]]] | None = None   # 알림에 가려진 확인 질문
         self.last_activity = self.mono()
 
         self._layout()
@@ -437,12 +457,14 @@ class PetWindow(QWidget):
         self._update_mask()
 
     def _update_mask(self) -> None:
-        region = QRegion(self.cat.geometry())
-        if self.input.isVisibleTo(self):
-            region = region.united(QRegion(self.input.geometry().adjusted(-2, -2, 2, 2)))
-        if self.bubble.isVisibleTo(self):
-            region = region.united(QRegion(self.bubble.geometry().adjusted(-10, -8, 10, 10)))
-        self.setMask(region)
+        if USE_MASK:
+            region = QRegion(self.cat.geometry())
+            if self.input.isVisibleTo(self):
+                region = region.united(QRegion(self.input.geometry().adjusted(-2, -2, 2, 2)))
+            if self.bubble.isVisibleTo(self):
+                region = region.united(QRegion(self.bubble.geometry().adjusted(-4, -4, 4, 4)))
+            self.setMask(region)
+        self.update()                    # 부분 갱신만 하면 투명 창에 지난 말풍선이 남을 수 있다
 
     def _restore_position(self) -> None:
         screen = QGuiApplication.primaryScreen()
@@ -476,6 +498,7 @@ class PetWindow(QWidget):
         self.ctx, self.dispatcher = ctx, dispatcher
         self.persona = ctx.persona
         ctx.reply_sink = self.bridge.notified.emit
+        dispatcher.runner = self.run_async
         ctx.scheduler.on_error = lambda exc: self.bridge.notified.emit(
             [Reply(ctx.persona.say("error.internal", {"reason": repr(exc)}, core=("reason",)), "error.internal",
                    ok=False, alert=True)])
@@ -527,10 +550,16 @@ class PetWindow(QWidget):
         """hold초 동안 보여준다. None이면 확인할 때까지."""
         if text != self.bubble.text() or state != self.bubble.state or choices:
             self.bubble.set_content(text, state, choices)
+        self._current_choices = list(choices)
         self.bubble.show()
         self._place_bubble()
         self.sticky = hold is None
         self.deadline = self.mono() + (hold or 0)
+
+    @staticmethod
+    def reply_seconds(text: str) -> float:
+        """응답을 보여줄 시간: 읽을 시간 + 여유. 너무 짧으면 못 읽고, 너무 길면 다음 응답과 섞여 보인다."""
+        return max(REPLY_MIN_SEC, min(REPLY_MAX_SEC, 2.5 + len(text) * REPLY_SEC_PER_CHAR))
 
     def show_replies(self, replies: list[Reply]) -> None:
         if not replies:
@@ -540,37 +569,77 @@ class PetWindow(QWidget):
         waiting = any(r.waiting for r in replies)
         alert = any(r.alert for r in replies)
         ok = all(r.ok for r in replies)
-        state = "needs_input" if waiting else "alert" if alert else ("blocked" if not ok else "ready")
-        hold = None if (waiting or alert) else min(20.0, 4.0 + len(text) * 0.06)
+        choices = last.choices
+        running = any(r.running for r in replies)
+        showing_alert = self.mode == "reply" and self.sticky and self.bubble.state == "alert"
+        if alert and not waiting and showing_alert:
+            # 아직 확인 안 한 알림이 있으면 덮어쓰지 않고 이어 붙인다 (타이머 두 개가 연달아 끝난 경우 등)
+            text = f"{self.bubble.text()}\n\n{text}"
+        elif not waiting and self.mode == "reply" and self.bubble.state == "needs_input" \
+                and self.dispatcher is not None and self.dispatcher.pending is not None:
+            # 확인 질문 중에 알림이나 인터넷 결과가 오면 질문을 기억해 뒀다가 다 보면 다시 보여준다
+            self._saved_question = (self.bubble.text(), self._current_choices)
+        if waiting:
+            self._saved_question = None
+        state = ("needs_input" if waiting else "alert" if alert else "running" if running
+                 else ("blocked" if not ok else "ready"))
+        hold = None if (waiting or alert) else self.reply_seconds(text) + (30.0 if running else 0.0)
         self.mode = "reply"
-        self.show_bubble(text, state, last.choices, hold)
+        self.show_bubble(text, state, choices, hold)
         pose = self.persona.pose_for((next((r for r in replies if r.alert), last)).key, ok)
-        self.cat.flash(pose, None if (waiting or alert) else 3.0)
+        self.cat.flash(pose, None if (waiting or alert or running) else 3.0)
         self.input.setPlaceholderText(self.persona.ui("placeholder_waiting" if waiting else "placeholder"))
+
+    def run_async(self, job: Callable[[], list[Reply]]) -> None:
+        """인터넷 스킬: 작업 스레드에서 돌리고 결과는 Signal로 GUI 스레드에 넘긴다."""
+        def run() -> None:
+            try:
+                replies = job()
+            except Exception as exc:  # job 안에서 이미 잡지만 혹시 몰라서
+                replies = [Reply(self.persona.say("error.internal", {"reason": repr(exc)}, core=("reason",)),
+                                 "error.internal", ok=False)]
+            self.bridge.finished.emit(replies)
+        threading.Thread(target=run, name="jonnyang-online", daemon=True).start()
+
+    def on_finished(self, replies: list[Reply]) -> None:
+        self.touch()
+        self.show_replies(replies)
 
     def on_notify(self, replies: list[Reply]) -> None:
         """타이머 끝, 알람, 리마인더 (스케줄러 스레드에서 Signal로 넘어옴)."""
         self.touch()
         self.show_replies(replies)
-        if not self.isVisible():
-            self.show()
-        self.raise_()
-        if self.tray is not None:
+        # 펫이 화면에 보이면 말풍선으로 충분하다. 트레이 알림까지 띄우면 같은 말이 화면 구석에 겹쳐 뜬다.
+        hidden = not self.isVisible()
+        if hidden and self.tray is not None:
             self.tray.showMessage(self.persona.ui("tray.tooltip"), "\n".join(r.text for r in replies),
                                   QSystemTrayIcon.MessageIcon.Information, 10_000)
+        if hidden:
+            self.show()
+        self.raise_()
 
     def acknowledge(self) -> None:
-        """알림·응답 말풍선 확인. 대답 대기 중이면 그대로 둔다(버튼이나 입력으로 답해야 함)."""
-        if self.mode == "reply" and self.dispatcher is not None and not self.dispatcher.pending:
-            self.sticky = False
-            self.deadline = 0
-            self.cat.clear_flash()
-            self.input.setPlaceholderText(self.persona.ui("placeholder"))
-            self.tick()
+        """알림·응답 말풍선 확인. 확인 질문에는 버튼이나 입력으로 답해야 하므로 그대로 둔다."""
+        if self.mode != "reply" or self.dispatcher is None:
+            return
+        pending = self.dispatcher.pending is not None
+        if self.bubble.state == "needs_input" and pending:
+            return
+        saved, self._saved_question = self._saved_question, None
+        if saved and pending:            # 알림에 가려졌던 확인 질문으로 돌아간다
+            self.show_bubble(saved[0], "needs_input", saved[1], hold=None)
+            self.cat.flash("ask", None)
+            self.input.setPlaceholderText(self.persona.ui("placeholder_waiting"))
+            return
+        self.sticky = False
+        self.deadline = 0
+        self.cat.clear_flash()
+        self.input.setPlaceholderText(self.persona.ui("placeholder"))
+        self.tick()
 
     def on_cat_clicked(self) -> None:
         self.touch()
-        if self.mode == "reply" and self.sticky and self.dispatcher is not None and not self.dispatcher.pending:
+        if self.mode == "reply" and self.sticky and self.bubble.state != "needs_input":
             self.acknowledge()
             return
         self.cat.pet()
@@ -594,9 +663,23 @@ class PetWindow(QWidget):
             return
         now = self.mono()
         if self.mode == "reply":
-            if self.dispatcher.pending is None and self.bubble.state == "needs_input":
-                self.sticky = False          # 대기 시간이 지나 dispatcher가 대기를 버림
-            if self.sticky or self.bubble.hovering or now < self.deadline:
+            if self.dispatcher.pending is None:
+                self._saved_question = None
+                if self.bubble.state == "needs_input":
+                    self.sticky = False      # 대기 시간이 지나 dispatcher가 대기를 버림
+            if self.bubble.hovering:         # 읽는 중이면 기다린다
+                self._was_hovering = True
+                return
+            if self._was_hovering:
+                self._was_hovering = False
+                self.deadline = max(self.deadline, now + HOVER_GRACE_SEC)
+            if self.sticky or now < self.deadline:
+                return
+            saved, self._saved_question = self._saved_question, None
+            if saved and self.dispatcher.pending is not None:
+                self.show_bubble(saved[0], "needs_input", saved[1], hold=None)
+                self.cat.flash("ask", None)
+                self.input.setPlaceholderText(self.persona.ui("placeholder_waiting"))
                 return
             self.cat.clear_flash()
             self.input.setPlaceholderText(self.persona.ui("placeholder"))

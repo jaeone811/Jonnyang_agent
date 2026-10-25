@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Protocol
 
 
@@ -47,9 +48,23 @@ class Beeper(Protocol):
     def beep(self) -> None: ...
 
 
+class FileOps(Protocol):
+    def folder(self, target: str) -> Path: ...          # 별칭 대상("known:Downloads", "~/x", "C:\\x") → 실제 경로
+    def trash(self, paths: list[str]) -> None: ...      # 휴지통으로 (영구삭제 없음)
+
+
+class NoFiles:
+    def folder(self, target: str) -> Path:
+        raise Unsupported("files")
+
+    def trash(self, paths: list[str]) -> None:
+        raise Unsupported("files")
+
+
 @dataclass
 class Platform:
     volume: VolumeControl
     launcher: Launcher
     sysinfo: SysInfo
     beeper: Beeper
+    files: FileOps = field(default_factory=NoFiles)

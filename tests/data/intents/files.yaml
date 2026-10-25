@@ -1,0 +1,17 @@
+# 파일 (실제 파일 작업은 test_files.py에서 임시 폴더로)
+- {text: "다운로드에서 pdf 찾아줘", intent: files.search, slots: {folder: 다운로드, exts: [pdf]}, tags: [정상]}
+- {text: "바탕화면에 엑셀 파일 있어?", intent: files.search, slots: {folder: 바탕화면, exts: [csv, xls, xlsx]}, tags: [정상]}
+- {text: "보고서 파일 찾아줘", intent: files.search, slots: {keyword: 보고서}, tags: [정상]}
+- {text: "'계약서' 파일 찾아줘", intent: files.search, slots: {keyword: 계약서}, tags: [정상]}
+- {text: "사진 파일 찾아줘", intent: files.search, tags: [정상]}
+- {text: "오래된 설치파일 찾아줘", intent: files.search, slots: {old: true}, tags: [정상]}
+- {text: "보고서 화일 찾아줘", intent: files.search, tags: [오타]}
+- {text: "다운로드 폴더 정리해줘", intent: files.organize, slots: {folder: 다운로드}, tags: [정상]}
+- {text: "바탕화면 좀 정리해", intent: files.organize, slots: {folder: 바탕화면}, tags: [정상]}
+- {text: "다운로드 폴더 정리하지 마", expect: negated, tags: [부정]}
+- {text: "다운로드에서 zip 파일 지워줘", intent: files.trash, slots: {folder: 다운로드, exts: [zip]}, tags: [정상]}
+- {text: "다운로드에 있는 설치파일 휴지통에 버려", intent: files.trash, tags: [정상]}
+- {text: "zip 파일 지우지 마", expect: negated, tags: [부정]}
+- {text: "1번 파일 문서 폴더로 옮겨줘", intent: files.move, slots: {index: 1, dest: 문서}, tags: [정상]}
+- {text: "1번 파일 이름을 '최종 보고서'로 바꿔줘", intent: files.rename, slots: {index: 1, new_name: 최종 보고서}, tags: [정상]}
+- {text: "다운로드 폴더 열어", intent: app.open, slots: {target: 다운로드}, tags: [구분]}

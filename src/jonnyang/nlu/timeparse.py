@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import calendar
+import json
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
@@ -28,6 +29,80 @@ ERR_RECURRING = "recurring"
 ERR_INVALID = "invalid"
 
 
+@dataclass(frozen=True)
+class Repeat:
+    """반복 규칙. kind: daily | weekdays | weekends | weekly | interval"""
+    kind: str
+    days: tuple[int, ...] = ()       # weekly: 0=월 ~ 6=일
+    hour: int = 0
+    minute: int = 0
+    seconds: int = 0                 # interval
+
+    def weekdays(self) -> tuple[int, ...]:
+        return {"daily": tuple(range(7)), "weekdays": (0, 1, 2, 3, 4), "weekends": (5, 6)}.get(self.kind, self.days)
+
+    def next_after(self, after: datetime, prev: datetime | None = None) -> datetime:
+        """after보다 뒤의 첫 시각. interval은 prev(직전 예정 시각)에서 간격만큼씩 넘긴다."""
+        if self.kind == "interval":
+            step = timedelta(seconds=self.seconds)
+            nxt = (prev or after) + step
+            if nxt <= after:
+                nxt += step * ((after - nxt) // step + 1)
+            return nxt.replace(microsecond=0)
+        days = self.weekdays()
+        d = after.date()
+        for i in range(8):
+            cand = datetime.combine(d + timedelta(days=i), time(self.hour, self.minute))
+            if cand > after and cand.weekday() in days:
+                return cand
+        raise ValueError("no weekday")
+
+    def to_json(self) -> str:
+        return json.dumps({"kind": self.kind, "days": list(self.days), "hour": self.hour, "minute": self.minute,
+                           "seconds": self.seconds})
+
+    @staticmethod
+    def from_json(s: str | None) -> "Repeat | None":
+        if not s:
+            return None
+        d = json.loads(s)
+        return Repeat(d["kind"], tuple(d.get("days", ())), d.get("hour", 0), d.get("minute", 0), d.get("seconds", 0))
+
+
+UNSUPPORTED_REPEAT_RE = re.compile(r"매달|매월|매년|해마다|격주|달마다|매\s*분기")
+INTERVAL_RE = re.compile(r"(\d+)\s*(시간|분)\s*(?:마다|간격으로|에\s*한\s*번씩?)|매\s*시간|매\s*(\d+)\s*분")
+_DAY_LIST = r"(?<![가-힣])(?:[월화수목금토일](?:요일)?\s*(?:,|와|과|하고|랑|이랑|및)?\s*)+"
+WEEKLY_RE = re.compile(rf"매\s*주\s*({_DAY_LIST})(?:마다|에는|에)?|({_DAY_LIST})마다")
+WEEKENDS_RE = re.compile(r"매\s*주말(?:마다|에는|에)?|주말마다|주말에는")
+WEEKDAYS_RE = re.compile(r"매\s*평일(?:마다|에는|에)?|평일(?:마다|에는|엔|에)?|주중(?:마다|에는|에)")
+DAILY_RE = re.compile(r"매일\s*매일|매일|날마다|하루마다|하루\s*한\s*번씩?")
+
+
+def _repeat(text: str) -> tuple[Repeat | None, list[tuple[int, int]], bool]:
+    """(규칙, 지울 구간, 지원 안 하는 반복인지)"""
+    if UNSUPPORTED_REPEAT_RE.search(text):
+        return None, [], True
+    m = INTERVAL_RE.search(text)
+    if m:
+        if m.group(1):
+            secs = int(m.group(1)) * (3600 if m.group(2) == "시간" else 60)
+        elif m.group(3):
+            secs = int(m.group(3)) * 60
+        else:
+            secs = 3600
+        return Repeat("interval", seconds=secs), [m.span()], False
+    m = WEEKLY_RE.search(text)
+    if m:
+        found = re.findall(r"([월화수목금토일])(?:요일)?", m.group(1) or m.group(2))
+        days = tuple(sorted({WEEKDAYS[c] for c in found}))
+        return Repeat("weekly", days=days), [m.span()], False
+    for pat, kind in ((WEEKENDS_RE, "weekends"), (WEEKDAYS_RE, "weekdays"), (DAILY_RE, "daily")):
+        m = pat.search(text)
+        if m:
+            return Repeat(kind), [m.span()], False
+    return None, [], False
+
+
 @dataclass
 class TimeResult:
     duration: timedelta | None = None   # "3분", "1시간 반" 같은 기간
@@ -36,6 +111,7 @@ class TimeResult:
     spans: list[tuple[int, int]] = field(default_factory=list)
     assumed: list[str] = field(default_factory=list)  # persona가 되읽어 줄 가정들
     error: str | None = None
+    repeat: Repeat | None = None        # "매일 아침 8시" 같은 반복 (at = 다음 울릴 시각)
 
     @property
     def found(self) -> bool:
@@ -104,12 +180,51 @@ def _duration_from(match_text: str) -> tuple[timedelta, int]:
 
 
 def parse(text: str, now: datetime, default_hour: int = 9) -> TimeResult:
+    rep, rep_spans, unsupported = _repeat(text)
+    if unsupported:
+        return TimeResult(error=ERR_RECURRING)
+    if rep is not None:
+        return _parse_repeat(text, now, default_hour, rep, rep_spans)
+    if re.search(r"마다", text):          # 위 규칙에 안 맞는 "~마다"
+        return TimeResult(error=ERR_RECURRING)
+    return _parse_once(text, now, default_hour)
+
+
+def _parse_repeat(text: str, now: datetime, default_hour: int, rep: Repeat,
+                  rep_spans: list[tuple[int, int]]) -> TimeResult:
+    buf = list(text)
+    for s, e in rep_spans:
+        for i in range(s, e):
+            buf[i] = " "
+    sub = _parse_once("".join(buf), now, default_hour)
+    res = TimeResult(repeat=rep, spans=sorted(rep_spans + sub.spans))
+    if rep.kind == "interval":
+        if sub.found:
+            res.error = ERR_MULTIPLE
+            return res
+        res.at = rep.next_after(now)
+        return res
+    if sub.error in (ERR_MULTIPLE, ERR_INVALID) or sub.duration is not None:
+        res.error = sub.error or ERR_MULTIPLE
+        return res
+    if sub.at is None:
+        return res                          # "매일 약 먹으라고" → 몇 시인지 되묻는다
+    hour, minute = sub.at.hour, sub.at.minute
+    assumed = [a for a in sub.assumed if a not in ("rolled_tomorrow", "nearest", "next_month", "next_year")]
+    if "nearest" in sub.assumed and 1 <= hour % 12 <= 11:
+        # 반복 알림은 "가장 가까운 시각"이 의미 없다: 1~6시는 오후, 7~11시는 오전으로 본다
+        h12 = hour % 12
+        hour = h12 + 12 if h12 <= 6 else h12
+        assumed.append("pm" if h12 <= 6 else "am")
+    res.repeat = Repeat(rep.kind, rep.days, hour, minute)
+    res.at = res.repeat.next_after(now)
+    res.assumed = assumed
+    return res
+
+
+def _parse_once(text: str, now: datetime, default_hour: int = 9) -> TimeResult:
     sc = _Scanner(text)
     res = TimeResult()
-
-    if re.search(r"매일|매주|매달|매월|마다|평일에는|주말마다", text):
-        res.error = ERR_RECURRING
-        return res
 
     # 1) 시각: "3시 15분", "3시 반", "15:30", 정오/자정. 기간의 "15분"과 헷갈리지 않게 먼저 지운다.
     clocks = sc.take(r"(?<!\d)(\d{1,2})\s*시(?!간)(?:\s*(\d{1,2})\s*분|\s*(반))?|(?<!\d)(\d{1,2}):(\d{2})")

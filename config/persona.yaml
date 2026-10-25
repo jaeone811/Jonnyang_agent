@@ -70,6 +70,20 @@ labels:
   intent.chat.greet: 인사
   intent.chat.thanks: 고맙다는 말
   intent.chat.meow: 수다
+  intent.online.toggle: 인터넷 기능 켜고 끄기
+  intent.weather.now: 날씨 보기
+  intent.air.now: 미세먼지 보기
+  intent.weather.set_home: 기본 동네 설정
+  intent.currency.rate: 환율 보기
+  intent.wiki.search: 위키백과 찾기
+  intent.news.headlines: 뉴스 보기
+  intent.news.open: 뉴스 기사 열기
+  intent.files.search: 파일 찾기
+  intent.files.open: 찾은 파일 열기
+  intent.files.organize: 폴더 정리
+  intent.files.trash: 파일 휴지통으로 보내기
+  intent.files.move: 파일 옮기기
+  intent.files.rename: 파일 이름 바꾸기
   # 도움말 분류
   skill.timer: 타이머
   skill.alarm: 알람
@@ -81,6 +95,16 @@ labels:
   skill.apps: 앱/폴더 열기
   skill.sysinfo: 시스템 상태
   skill.meta: 기타
+  skill.files: 파일
+  skill.weather: 날씨·미세먼지
+  skill.currency: 환율
+  skill.wiki: 위키백과
+  skill.news: 뉴스
+  # 인터넷 실패 안내에 들어갈 서비스 이름
+  service.weather: 날씨
+  service.currency: 환율
+  service.wiki: 위키백과
+  service.news: 뉴스
   # 되돌리기 확인 문구에 들어갈 "무엇을"
   undo.timer.set: "{duration} 타이머 맞춘 것"
   undo.timer.cancel: "{duration} 타이머 취소한 것"
@@ -97,6 +121,10 @@ labels:
   undo.volume: "볼륨 바꾼 것"
   undo.alias: "'{alias}' 별칭 등록한 것"
   undo.setting: "설정 바꾼 것"
+  undo.weather.home: "기본 동네를 {place}(으)로 바꾼 것"
+  undo.files.move: "파일 {count}개를 {dest} 폴더로 옮긴 것"
+  undo.files.organize: "{folder} 폴더 정리한 것 (파일 {count}개)"
+  undo.files.rename: "'{old}' 이름을 '{new}'(으)로 바꾼 것"
   # 시간 해석 가정
   assumed.pm: 오후로 알아들음
   assumed.am: 오전으로 알아들음
@@ -110,30 +138,49 @@ labels:
 # ───────────── 데스크톱 펫 (GUI) ─────────────
 # 고양이 색. 코드가 아니라 여기서 바꾼다.
 appearance:
-  body: "#F6B46B"        # 치즈냥 몸통
-  stripe: "#E08A3C"      # 이마 줄무늬, 꼬리 끝
-  belly: "#FFF4E3"       # 배, 주둥이
-  outline: "#8A5A36"     # 테두리
-  ear_inner: "#FFB8C6"
-  eye: "#3A2E2E"
-  blush: "#FF9AAE"
-  nose: "#F2789A"
-  bubble_bg: "#FFFDF8"
-  bubble_text: "#2B2622"
-  bubble_border: "#EADBC6"
+  # 컨셉 아트: 하얀 장모 고양이 + 파란 눈 + 금색 왕관 + 남색 망토 (팔레트: 흰색, 연보라, 파랑, 남색, 금색)
+  fur: "#FFFFFF"         # 털
+  fur_shade: "#E6E3F6"   # 털 그늘 (연보라)
+  outline: "#9D98CC"     # 테두리
+  ear_inner: "#F8B5CD"
+  eye_top: "#1D2470"     # 눈 위쪽 (짙은 남색)
+  eye_bottom: "#62A6FF"  # 눈 아래쪽 (밝은 파랑)
+  eye_line: "#2A2458"    # 눈꺼풀 선, 감은 눈
+  blush: "#FFB0C6"
+  nose: "#F28BA8"
+  mouth: "#7A5A8C"
+  tongue: "#FF8FA8"
+  cape: "#26306C"        # 망토
+  cape_light: "#3B4796"
+  gold: "#F0C150"        # 왕관, 망토 테두리, 브로치
+  gold_dark: "#B98A2C"
+  gem: "#3F7BFF"         # 왕관·브로치 보석
+  tail_tip: "#F3C95E"    # 꼬리 끝 금빛
+  mark: "#5B8DEF"        # 머리 위 ? z … 기호
+  sparkle: "#F5C443"     # 반짝이
+  bubble_bg: "#FDFCFF"
+  bubble_text: "#262150"
+  bubble_border: "#D8D3F2"
+  input_focus: "#7E8FE0"
   state:                 # 말풍선 상태 점 색 (Codex 펫처럼: 작업 중 / 입력 필요 / 완료 / 문제 + 알림)
     running: "#4C8BF5"
     needs_input: "#F5A524"
     ready: "#2BB673"
     blocked: "#E5484D"
-    alert: "#FF7A45"
+    alert: "#FF5C8A"
 
 # 응답 키 → 표정. 위에서부터 처음 맞는 규칙을 쓴다(* 와일드카드).
-# 표정: idle happy confused alert ask sleep think listen
+# 표정: idle happy confused alert ask sleep think listen search(노트북) book(마법책) files(폴더) sad love
 poses:
   default: happy          # 규칙에 없고 성공
   error: confused         # 규칙에 없고 실패
   rules:
+    - ["online.loading", search]
+    - ["online.*", sad]
+    - ["wiki.*", book]
+    - ["meta.help", book]
+    - ["confirm.files_*", ask]
+    - ["files.*", files]
     - ["*.done", alert]
     - ["*.missed", alert]
     - ["confirm.*", ask]
@@ -141,6 +188,8 @@ poses:
     - ["ask.*", ask]
     - ["excluded_only", ask]
     - ["fallback", confused]
+    - ["chat.thanks", love]
+    - ["chat.pet", love]
     - ["time.*", confused]
     - ["error.*", confused]
     - ["negated", idle]
@@ -206,7 +255,7 @@ profiles:
       time.past_date: "그 날짜는 이미 지났다냥. 다시 말해달라냥"
       time.multiple: "시간이 여러 개라서 헷갈린다냥. 하나만 말해달라냥"
       time.vague: "'이따가' 말고 정확한 시간을 말해달라냥 (예: 30분 뒤, 오후 3시)"
-      time.recurring: "반복 알림('매일', '마다')은 아직 못 한다냥. 한 번짜리만 된다냥"
+      time.recurring: "'매달', '격주' 같은 반복은 아직 못 한다냥. 매일 / 평일 / 주말 / 매주 ○요일 / ○분마다는 된다냥"
       time.invalid: "그런 날짜/시각은 없다냥. 다시 말해달라냥"
 
       timer.set: ["{label} {duration} 타이머 맞췄다냥! ⏱️ {end}에 울린다냥", "알았다냥, {label} {duration} 잰다냥. {end}에 부를게냥"]
@@ -223,26 +272,28 @@ profiles:
       alarm.set: "알람 맞췄다냥! ⏰ {at}에 깨울게냥 {note}"
       alarm.none: "맞춰둔 알람이 없다냥."
       alarm.list: "알람 {count}개 있다냥\n{items}"
-      alarm.item: "  {no}. {at}"
+      alarm.item: "  {no}. {at} {repeat}"
       alarm.which: "알람이 {count}개라 어떤 건지 모르겠다냥. \"1번 알람 꺼\"처럼 말해달라냥\n{items}"
       alarm.cancel: "{at} 알람 껐다냥."
       confirm.alarm_clear: "알람 {count}개 전부 끌거냥? (응/아니)\n{items}"
       alarm.clear: "알람 {count}개 다 껐다냥."
       alarm.done: ["일어나라냥!! ⏰ {at} 알람이다냥", "냐아앙! {at}이다냥, 일어나라냥 ⏰"]
       alarm.missed: "존냥이가 꺼져 있는 동안 놓친 알람이 {count}개 있다냥\n{items}"
-      alarm.missed_item: "  - {at}"
+      alarm.missed_item: "  - {at} {repeat}"
+      alarm.set_repeat: "반복 알람 맞췄다냥! ⏰ {repeat} (다음: {at}) {note}"
 
       reminder.set: "알았다냥! {at}에 '{message}' 알려줄게냥 📝 {note}"
       reminder.none: "등록된 리마인더가 없다냥."
       reminder.list: "리마인더 {count}개 있다냥\n{items}"
-      reminder.item: "  {no}. {at} — {message}"
+      reminder.item: "  {no}. {at} — {message} {repeat}"
       reminder.which: "리마인더가 {count}개라 어떤 건지 모르겠다냥. \"2번 리마인더 취소\"처럼 말해달라냥\n{items}"
       reminder.cancel: "{at} '{message}' 리마인더 지웠다냥."
       confirm.reminder_clear: "리마인더 {count}개 전부 지울거냥? (응/아니)\n{items}"
       reminder.clear: "리마인더 {count}개 다 지웠다냥."
       reminder.done: ["냥! 시간 됐다냥 📝 '{message}'", "까먹지 마라냥! '{message}' 할 시간이다냥 📝"]
       reminder.missed: "존냥이가 꺼져 있는 동안 지나간 리마인더가 {count}개 있다냥\n{items}"
-      reminder.missed_item: "  - {at} — {message}"
+      reminder.missed_item: "  - {at} — {message} {repeat}"
+      reminder.set_repeat: "알았다냥! {repeat}에 '{message}' 알려줄게냥 📝 (다음: {at}) {note}"
 
       list.add: "{list} 목록에 {items} 넣었다냥 🛒 (지금 {count}개)"
       list.show: "{list} 목록이다냥 ({count}개)\n{items}"
@@ -316,6 +367,76 @@ profiles:
       status.waiting: "대답 기다리는 중이다냥"
       status.idle: ["대기중이다냥 😺", "부르면 온다냥", "골골… 뭐 시킬 거 없냥?", "꼬리 손질 중이다냥", "창밖 구경 중이다냥"]
       status.sleep: ["zzZ… 💤", "쿨쿨… 츄르 꿈 꾸는 중"]
+
+      online.loading: ["{service} 알아보는 중이다냥… 💻", "잠깐만, {service} 찾아보는 중이다냥 🔎"]
+      online.offline: "인터넷이 끊겼다냥. {service}은(는) 지금 못 한다냥 📡"
+      online.timeout: "{service} 서버가 대답을 안 한다냥. 조금 있다 다시 물어봐달라냥"
+      online.http: "{service} 서버에서 오류가 났다냥 (코드 {detail})"
+      online.bad_data: "{service} 서버가 이상한 답을 줬다냥. 나중에 다시 해달라냥"
+      online.disabled: "인터넷 기능이 꺼져 있어서 {service}은(는) 쉰다냥. \"인터넷 기능 켜\"라고 하면 다시 쓴다냥"
+      online.toggle_on: "인터넷 기능 켰다냥 🌐"
+      online.toggle_off: "인터넷 기능 껐다냥. 날씨·환율·위키·뉴스는 쉰다냥"
+
+      weather.now: "{place} 지금 {desc}, {temp}°C다냥 ☀️ (체감 {feels}°C, 습도 {humidity}%)\n오늘 {low}~{high}°C, 비 올 확률 {rain}"
+      weather.day: "{day} {place} 날씨는 {desc}, {low}~{high}°C다냥 (비 올 확률 {rain})"
+      weather.rain: "{day} {place} 비 올 확률은 {rain}이다냥 ☔ ({desc}, {low}~{high}°C)"
+      weather.week: "{place} 이번 주 날씨다냥 📅\n{items}"
+      weather.week_item: "  {day} {desc} {low}~{high}°C, 비 {rain}"
+      weather.tip_umbrella: "우산 챙겨라냥 ☂️"
+      weather.tip_no_umbrella: "우산은 안 챙겨도 될 것 같다냥"
+      weather.tip_snow: "눈 소식 있다냥! 길 미끄러우니 조심하라냥 ❄️"
+      weather.tip_cold: "영하로 내려간다냥, 따뜻하게 입어라냥 🧣"
+      weather.tip_hot: "덥다냥… 물 많이 마셔라냥 🥤"
+      weather.place_unknown: "'{place}'이(가) 어딘지 못 찾았다냥. 시·군 이름으로 말해달라냥"
+      weather.out_of_range: "날씨는 {days}일 치까지만 알 수 있다냥"
+      weather.home_set: "이제 기본 동네는 {place}다냥 🏠 (\"날씨 어때\"만 해도 {place} 날씨 알려줄게냥)"
+      air.now: "{place} 미세먼지 {pm10}㎍/㎥({pm10_grade}), 초미세먼지 {pm25}㎍/㎥({pm25_grade})다냥 😷 종합 {grade}\n(측정소 실측이 아니라 Open-Meteo 대기 모델 추정치다냥)"
+      air.tip_mask: "마스크 챙겨라냥 😷"
+
+      currency.rate: "💱 {unit}{src} = {value}{dst} ({date} 기준 환율이다냥)"
+      currency.convert: "💱 {amount}{src} ≈ {value}{dst} ({date} 기준 환율로 계산했다냥)"
+      currency.unsupported: "{src} → {dst} 환율은 못 찾았다냥"
+
+      wiki.summary: "📖 {title}\n{summary}\n(출처: 위키백과 {url})"
+      wiki.not_found: "위키백과에서 '{topic}'을(를) 못 찾았다냥"
+      ask.topic: "뭘 찾아볼까냥? (예: 광합성이 뭐야)"
+
+      news.list: "📰 {topic} 뉴스다냥\n{items}\n(\"2번 기사 열어\"라고 하면 브라우저로 연다냥)"
+      news.item: "  {no}. {title}"
+      news.empty: "{topic} 뉴스를 못 가져왔다냥"
+      news.no_list: "먼저 \"뉴스 보여줘\"라고 해달라냥"
+      news.bad_index: "기사는 1~{count}번까지 있다냥"
+      news.bad_link: "그 기사는 주소가 이상해서 안 열었다냥: {title}"
+      news.opened: "{no}번 기사 열었다냥 🌐 {title}"
+
+      files.ask_what: "어떤 파일을 찾을까냥? (예: 다운로드에서 pdf 찾아줘, '계약서' 파일 찾아줘)"
+      files.none: "{where}에서 '{what}' 파일을 못 찾았다냥"
+      files.found: "{where}에서 {count}개 찾았다냥 🔎\n{items}"
+      files.found_more: "{where}에서 {count}개 찾았다냥 🔎 (최근 것 {shown}개만 보여줄게냥)\n{items}"
+      files.item: "  {no}. {name} ({where}, {size})"
+      files.no_list: "먼저 파일을 찾아달라냥 (예: 다운로드에서 pdf 찾아줘)"
+      files.bad_index: "찾은 파일은 1~{count}번까지 있다냥"
+      files.gone: "'{name}' 파일이 없어졌거나 옮겨졌다냥"
+      files.opened: "{name} 열었다냥 📄"
+      files.ask_which: "어떤 파일인지 모르겠다냥. 먼저 찾고 번호로 말해달라냥"
+      files.none_target: "해당하는 파일이 없다냥"
+      files.too_many: "파일이 {count}개나 된다냥. 한 번에 {limit}개까지만 한다냥, 범위를 좁혀달라냥"
+      files.error: "파일 작업 중에 문제가 생겼다냥. 원인: {reason}"
+      confirm.files_trash: "이 파일 {count}개를 휴지통으로 보낼거냥? (응/아니)\n{items}"
+      files.trashed: "{count}개 휴지통으로 보냈다냥 🗑️ (휴지통에서 복원할 수 있다냥)"
+      files.ask_dest: "어느 폴더로 옮길까냥? (예: 1번 파일 문서 폴더로 옮겨줘)"
+      confirm.files_move: "이 파일 {count}개를 {dest} 폴더로 옮길거냥? (응/아니)\n{items}"
+      files.moved: "{count}개를 {dest} 폴더로 옮겼다냥 📦 (\"되돌려\" 하면 원래대로)"
+      files.ask_folder: "어느 폴더를 정리할까냥? (예: 다운로드 폴더 정리해줘)"
+      files.no_folder: "{folder} 폴더를 못 찾았다냥"
+      files.organize_nothing: "{folder} 폴더에 정리할 파일이 없다냥 ✨"
+      files.organize_item: "  {category}: {count}개 ({examples})"
+      confirm.files_organize: "{folder} 폴더 파일 {count}개를 종류별 폴더로 나눌거냥? (응/아니)\n{items}"
+      files.organized: "{folder} 폴더 파일 {count}개 정리했다냥 🗂️ (\"되돌려\" 하면 원래대로)"
+      files.ask_name: "새 이름을 따옴표로 말해달라냥 (예: 1번 이름을 '최종 보고서'로 바꿔줘)"
+      files.bad_name: "'{name}'은(는) 파일 이름으로 못 쓴다냥 (\\ / : * ? \" < > | 빼고)"
+      files.name_taken: "'{name}' 파일이 이미 있다냥. 덮어쓰진 않는다냥"
+      files.renamed: "'{old}' → '{new}' 이름 바꿨다냥 ✏️"
 
   # ───────────── 시크한 냥 (soft에서 바꾸고 싶은 것만) ─────────────
   chic:
@@ -395,7 +516,7 @@ profiles:
       time.past_date: "그 날짜는 이미 지났습니다."
       time.multiple: "시간 표현이 여러 개입니다. 하나만 말해 주세요."
       time.vague: "정확한 시간을 말해 주세요 (예: 30분 뒤, 오후 3시)."
-      time.recurring: "반복 알림은 아직 지원하지 않습니다."
+      time.recurring: "'매달', '격주' 같은 반복은 지원하지 않습니다. 매일 / 평일 / 주말 / 매주 ○요일 / ○분마다는 됩니다."
       time.invalid: "없는 날짜나 시각입니다."
       timer.set: "{label} {duration} 타이머를 맞췄습니다. {end}에 울립니다."
       timer.bad_duration: "{duration} 타이머는 맞출 수 없습니다 (1초~7일)."
@@ -410,25 +531,27 @@ profiles:
       alarm.set: "{at} 알람을 맞췄습니다. {note}"
       alarm.none: "맞춘 알람이 없습니다."
       alarm.list: "알람 {count}개\n{items}"
-      alarm.item: "  {no}. {at}"
+      alarm.item: "  {no}. {at} {repeat}"
       alarm.which: "알람이 {count}개입니다. \"1번 알람 꺼\"처럼 말해 주세요.\n{items}"
       alarm.cancel: "{at} 알람을 껐습니다."
       confirm.alarm_clear: "알람 {count}개를 모두 끌까요? (응/아니)\n{items}"
       alarm.clear: "알람 {count}개를 껐습니다."
       alarm.done: "{at} 알람입니다."
       alarm.missed: "꺼져 있는 동안 지난 알람 {count}개\n{items}"
-      alarm.missed_item: "  - {at}"
+      alarm.missed_item: "  - {at} {repeat}"
+      alarm.set_repeat: "반복 알람을 맞췄습니다. {repeat} (다음: {at}) {note}"
       reminder.set: "{at}에 '{message}' 알려 드릴게요. {note}"
       reminder.none: "등록된 리마인더가 없습니다."
       reminder.list: "리마인더 {count}개\n{items}"
-      reminder.item: "  {no}. {at} — {message}"
+      reminder.item: "  {no}. {at} — {message} {repeat}"
       reminder.which: "리마인더가 {count}개입니다. \"2번 리마인더 취소\"처럼 말해 주세요.\n{items}"
       reminder.cancel: "{at} '{message}' 리마인더를 지웠습니다."
       confirm.reminder_clear: "리마인더 {count}개를 모두 지울까요? (응/아니)\n{items}"
       reminder.clear: "리마인더 {count}개를 지웠습니다."
       reminder.done: "리마인더: '{message}'"
       reminder.missed: "꺼져 있는 동안 지난 리마인더 {count}개\n{items}"
-      reminder.missed_item: "  - {at} — {message}"
+      reminder.missed_item: "  - {at} — {message} {repeat}"
+      reminder.set_repeat: "{repeat}에 '{message}' 알려 드릴게요. (다음: {at}) {note}"
       list.add: "{list} 목록에 {items} 추가했습니다. (현재 {count}개)"
       list.show: "{list} 목록 ({count}개)\n{items}"
       list.item: "  {no}. {item}"
@@ -495,3 +618,67 @@ profiles:
       status.waiting: "응답 대기 중"
       status.idle: "대기 중"
       status.sleep: "절전 중"
+      online.loading: "{service} 정보를 가져오는 중입니다…"
+      online.offline: "인터넷에 연결되어 있지 않아 {service} 기능을 쓸 수 없습니다."
+      online.timeout: "{service} 서버가 응답하지 않습니다. 잠시 후 다시 시도해 주세요."
+      online.http: "{service} 서버 오류입니다 (코드 {detail})."
+      online.bad_data: "{service} 서버 응답을 해석하지 못했습니다."
+      online.disabled: "인터넷 기능이 꺼져 있어 {service} 기능을 쓸 수 없습니다. \"인터넷 기능 켜\"로 다시 켤 수 있습니다."
+      online.toggle_on: "인터넷 기능을 켰습니다."
+      online.toggle_off: "인터넷 기능을 껐습니다."
+      weather.now: "{place} 현재 {desc}, {temp}°C (체감 {feels}°C, 습도 {humidity}%)\n오늘 {low}~{high}°C, 강수 확률 {rain}"
+      weather.day: "{day} {place} {desc}, {low}~{high}°C (강수 확률 {rain})"
+      weather.rain: "{day} {place} 강수 확률 {rain} ({desc}, {low}~{high}°C)"
+      weather.week: "{place} 주간 날씨\n{items}"
+      weather.week_item: "  {day} {desc} {low}~{high}°C, 강수 {rain}"
+      weather.tip_umbrella: "우산을 챙기세요."
+      weather.tip_no_umbrella: "우산은 필요 없어 보입니다."
+      weather.tip_snow: "눈 예보가 있습니다. 미끄럼에 주의하세요."
+      weather.tip_cold: "영하로 내려갑니다. 따뜻하게 입으세요."
+      weather.tip_hot: "덥습니다. 물을 충분히 드세요."
+      weather.place_unknown: "'{place}' 지역을 찾지 못했습니다."
+      weather.out_of_range: "날씨는 {days}일 치까지만 조회할 수 있습니다."
+      weather.home_set: "기본 지역을 {place}(으)로 설정했습니다."
+      air.now: "{place} 미세먼지 {pm10}㎍/㎥({pm10_grade}), 초미세먼지 {pm25}㎍/㎥({pm25_grade}), 종합 {grade}\n(Open-Meteo 대기 모델 추정치)"
+      air.tip_mask: "마스크를 챙기세요."
+      currency.rate: "{unit}{src} = {value}{dst} ({date} 기준)"
+      currency.convert: "{amount}{src} ≈ {value}{dst} ({date} 기준 환율)"
+      currency.unsupported: "{src} → {dst} 환율을 찾지 못했습니다."
+      wiki.summary: "{title}\n{summary}\n(출처: 위키백과 {url})"
+      wiki.not_found: "위키백과에서 '{topic}'을(를) 찾지 못했습니다."
+      ask.topic: "무엇을 찾아볼까요? (예: 광합성이 뭐야)"
+      news.list: "{topic} 뉴스\n{items}\n(\"2번 기사 열어\"로 브라우저에서 엽니다)"
+      news.item: "  {no}. {title}"
+      news.empty: "{topic} 뉴스를 가져오지 못했습니다."
+      news.no_list: "먼저 \"뉴스 보여줘\"라고 말해 주세요."
+      news.bad_index: "기사는 1~{count}번까지 있습니다."
+      news.bad_link: "주소가 올바르지 않아 열지 않았습니다: {title}"
+      news.opened: "{no}번 기사를 열었습니다. {title}"
+      files.ask_what: "어떤 파일을 찾을까요? (예: 다운로드에서 pdf 찾아줘)"
+      files.none: "{where}에서 '{what}' 파일을 찾지 못했습니다."
+      files.found: "{where}에서 {count}개 찾았습니다.\n{items}"
+      files.found_more: "{where}에서 {count}개 찾았습니다 (최근 {shown}개 표시).\n{items}"
+      files.item: "  {no}. {name} ({where}, {size})"
+      files.no_list: "먼저 파일을 찾아 주세요."
+      files.bad_index: "찾은 파일은 1~{count}번까지 있습니다."
+      files.gone: "'{name}' 파일이 없거나 옮겨졌습니다."
+      files.opened: "{name}을(를) 열었습니다."
+      files.ask_which: "어떤 파일인지 모르겠습니다. 먼저 찾고 번호로 말해 주세요."
+      files.none_target: "해당하는 파일이 없습니다."
+      files.too_many: "파일이 {count}개입니다. 한 번에 {limit}개까지만 처리합니다."
+      files.error: "파일 작업 중 오류: {reason}"
+      confirm.files_trash: "파일 {count}개를 휴지통으로 보낼까요? (응/아니)\n{items}"
+      files.trashed: "{count}개를 휴지통으로 보냈습니다. (휴지통에서 복원 가능)"
+      files.ask_dest: "어느 폴더로 옮길까요?"
+      confirm.files_move: "파일 {count}개를 {dest} 폴더로 옮길까요? (응/아니)\n{items}"
+      files.moved: "{count}개를 {dest} 폴더로 옮겼습니다."
+      files.ask_folder: "어느 폴더를 정리할까요?"
+      files.no_folder: "{folder} 폴더를 찾지 못했습니다."
+      files.organize_nothing: "{folder} 폴더에 정리할 파일이 없습니다."
+      files.organize_item: "  {category}: {count}개 ({examples})"
+      confirm.files_organize: "{folder} 폴더 파일 {count}개를 종류별 폴더로 나눌까요? (응/아니)\n{items}"
+      files.organized: "{folder} 폴더 파일 {count}개를 정리했습니다."
+      files.ask_name: "새 이름을 따옴표로 말해 주세요."
+      files.bad_name: "'{name}'은(는) 파일 이름으로 쓸 수 없습니다."
+      files.name_taken: "'{name}' 파일이 이미 있습니다. 덮어쓰지 않습니다."
+      files.renamed: "'{old}' → '{new}' 이름을 바꿨습니다."

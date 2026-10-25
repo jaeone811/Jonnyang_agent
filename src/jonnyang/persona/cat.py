@@ -145,4 +145,9 @@ class Persona:
         return self._fill(template, self._format_data(data, now))
 
     def render(self, r: Result | Confirm, now: datetime | None = None) -> str:
-        return self.say(r.key, r.data, now, r.core, r.items, r.item_key)
+        text = self.say(r.key, r.data, now, r.core, r.items, r.item_key)
+        for f in getattr(r, "follow", None) or []:
+            extra = self.render(f, now)
+            if extra:
+                text += "\n" + extra
+        return text

@@ -1,0 +1,50 @@
+# 날씨·미세먼지
+- {text: "오늘 날씨 어때", intent: weather.now, tags: [정상]}
+- {text: "날씨 알려줘", intent: weather.now, tags: [정상]}
+- {text: "내일 부산 날씨 어때?", intent: weather.now, slots: {place: 부산}, tags: [정상]}
+- {text: "서울 날씨", intent: weather.now, slots: {place: 서울}, tags: [정상]}
+- {text: "제주도 날씨 좀 알려줄래", intent: weather.now, slots: {place: 제주}, tags: [어미변형]}
+- {text: "내일 비 와?", intent: weather.now, tags: [정상]}
+- {text: "내일 비 안 와?", intent: weather.now, tags: [질문]}
+- {text: "우산 챙겨야 돼?", intent: weather.now, tags: [정상]}
+- {text: "이번 주 날씨 알려줘", intent: weather.now, tags: [정상]}
+- {text: "날씨 어떄", intent: weather.now, tags: [오타]}
+- {text: "날씨 알려주지 마", expect: negated, tags: [부정]}
+- {text: "뉴스 말고 날씨 알려줘", intent: weather.now, tags: [제외]}
+- {text: "미세먼지 어때", intent: air.now, tags: [정상]}
+- {text: "오늘 공기 어때", intent: air.now, tags: [정상]}
+- {text: "강릉 미세먼지 알려줘", intent: air.now, slots: {place: 강릉}, tags: [정상]}
+- {text: "초미세먼지 심해?", intent: air.now, tags: [어미변형]}
+- {text: "우리 동네 부산으로 설정해", intent: weather.set_home, slots: {place: 부산}, tags: [정상]}
+- {text: "기본 지역 대전으로 바꿔줘", intent: weather.set_home, slots: {place: 대전}, tags: [정상]}
+
+# 환율
+- {text: "달러 환율 알려줘", intent: currency.rate, slots: {src: USD, dst: KRW}, tags: [정상]}
+- {text: "엔화 환율 얼마야", intent: currency.rate, slots: {src: JPY, dst: KRW}, tags: [정상]}
+- {text: "100달러는 몇 원이야", intent: currency.rate, slots: {src: USD, dst: KRW, amount: 100.0}, tags: [정상]}
+- {text: "5만원은 몇 달러야", intent: currency.rate, slots: {src: KRW, dst: USD, amount: 50000.0}, tags: [정상]}
+- {text: "유로 환율", intent: currency.rate, slots: {src: EUR}, tags: [정상]}
+- {text: "환율 알려줘", intent: currency.rate, tags: [정상]}
+- {text: "환률 알려줘", intent: currency.rate, tags: [오타]}
+- {text: "10파운드는 몇 킬로그램", intent: units.convert, tags: [구분]}
+
+# 위키백과
+- {text: "아인슈타인이 누구야", intent: wiki.search, slots: {topic: 아인슈타인}, tags: [정상]}
+- {text: "광합성이 뭐야", intent: wiki.search, slots: {topic: 광합성}, tags: [정상]}
+- {text: "위키에서 고양이 찾아줘", intent: wiki.search, slots: {topic: 고양이}, tags: [정상]}
+- {text: "블랙홀에 대해 알려줘", intent: wiki.search, slots: {topic: 블랙홀}, tags: [정상]}
+- {text: "'양자역학' 위키백과 검색해줘", intent: wiki.search, slots: {topic: 양자역학}, tags: [정상]}
+- {text: "볼륨 몇이야", intent: volume.get, tags: [구분]}
+- {text: "뭐 할 수 있어?", intent: meta.help, tags: [구분]}
+
+# 뉴스
+- {text: "뉴스 보여줘", intent: news.headlines, tags: [정상]}
+- {text: "오늘 뉴스 알려줘", intent: news.headlines, tags: [정상]}
+- {text: "IT 뉴스", intent: news.headlines, slots: {topic: IT}, tags: [정상]}
+- {text: "축구 뉴스 알려줘", intent: news.headlines, slots: {topic: 스포츠}, tags: [정상]}
+- {text: "경제 소식 알려줘", intent: news.headlines, slots: {topic: 경제}, tags: [정상]}
+- {text: "뉴스 보여주지 마", expect: negated, tags: [부정]}
+
+# 인터넷 기능 켜고 끄기
+- {text: "인터넷 기능 꺼", intent: online.toggle, slots: {enabled: false}, tags: [정상]}
+- {text: "인터넷 기능 다시 켜줘", intent: online.toggle, slots: {enabled: true}, tags: [정상]}
