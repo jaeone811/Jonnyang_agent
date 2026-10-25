@@ -158,3 +158,13 @@ def test_real_network_disabled_raises_without_io():
     with pytest.raises(NetworkError) as e:
         net.get_bytes("https://example.com")
     assert e.value.kind == "disabled"
+
+
+def test_geocoding_prefers_biggest_place(make_app):
+    app = make_app(routes={
+        FORECAST: FORECAST_JSON,
+        GEO: {"results": [{"name": "고성리", "latitude": 35.0, "longitude": 127.0, "population": 300},
+                          {"name": "고성군", "latitude": 38.38, "longitude": 128.47, "population": 27000}]}})
+    out = app.say("고성군 날씨")
+    assert "고성군" in out
+    assert "latitude=38.38" in app.net.calls[-1]

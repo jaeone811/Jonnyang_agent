@@ -18,6 +18,14 @@ WEEK_RE = re.compile(r"이번\s*주|주간|일주일|한\s*주")
 SHOW = {"SHOW": 0.2, "TELL": 0.2}
 
 
+def pick_place(results: list[dict]) -> dict | None:
+    """같은 이름이 여럿이면 인구가 가장 많은 곳. 첫 결과만 쓰면 '대구'가 북한의 같은 이름 마을,
+    '인천'이 전남의 작은 마을로 잡혔다(CI 실측). 인구가 같으면 API 순서를 따른다."""
+    if not results:
+        return None
+    return max(enumerate(results), key=lambda ir: (ir[1].get("population") or 0, -ir[0]))[1]
+
+
 def _weather_hint(req) -> float:
     return 0.4 if RAIN_RE.search(req.text) else 0.0
 
@@ -72,11 +80,10 @@ class WeatherSkill(OnlineSkill):
             return key, *self.places[key]
         url = self.cfg["geocode_url"]
         for country in ("KR", None):
-            data = self.ctx.network.get_json(url, {"name": name, "count": 1, "language": "ko", "format": "json",
+            data = self.ctx.network.get_json(url, {"name": name, "count": 10, "language": "ko", "format": "json",
                                                    "countryCode": country}, ttl=30 * 86400)
-            results = data.get("results") or []
-            if results:
-                r = results[0]
+            r = pick_place(data.get("results") or [])
+            if r is not None:
                 return str(r.get("name") or name), float(r["latitude"]), float(r["longitude"])
         return None
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 import math
 import random
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,6 +22,7 @@ from jonnyang.app import build_app  # noqa: E402
 from jonnyang.core.network import Network, NetworkError  # noqa: E402
 from jonnyang.core.storage import Storage  # noqa: E402
 from jonnyang.platform.fake import fake_platform  # noqa: E402
+from jonnyang.skills.online.weather import pick_place  # noqa: E402
 
 COMMANDS = ["오늘 날씨 어때", "내일 부산 비 와?", "양양 날씨", "이번 주 날씨 알려줘", "미세먼지 어때",
             "달러 환율 알려줘", "엔화 환율", "100유로는 몇 원이야", "5만원은 몇 달러야",
@@ -46,19 +48,19 @@ def main() -> int:
         print(f"{'FAIL' if failed else 'OK  '} > {text}")
         for r in replies:
             print("      " + r.text.replace("\n", "\n      "))
-    print("\n== 지역 좌표 점검 (지오코딩과 15km 넘게 차이 나면 표시) ==")
+    print("\n== 지역 좌표 점검 (지오코딩 + 인구 최대 선택과 15km 넘게 차이 나면 표시) ==")
     geo = ctx.online["weather"]["geocode_url"]
     for name, (lat, lon) in (ctx.online.get("places") or {}).items():
+        time.sleep(0.3)           # 연달아 너무 빨리 부르면 서버가 연결을 끊는다(WinError 10054)
         try:
-            data = net.get_json(geo, {"name": name, "count": 1, "language": "ko", "format": "json"})
+            data = net.get_json(geo, {"name": name, "count": 10, "language": "ko", "format": "json"})
         except NetworkError as exc:
             print(f"  ?? {name}: {exc}")
             continue
-        results = data.get("results") or []
-        if not results:
+        r = pick_place(data.get("results") or [])
+        if r is None:
             print(f"  ?? {name}: 지오코딩 결과 없음")
             continue
-        r = results[0]
         dist = km((lat, lon), (r["latitude"], r["longitude"]))
         mark = "!!" if dist > 15 else "ok"
         print(f"  {mark} {name}: 표 ({lat}, {lon}) / API {r.get('name')} ({r['latitude']}, {r['longitude']}, "

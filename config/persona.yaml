@@ -379,7 +379,7 @@ profiles:
 
       weather.now: "{place} 지금 {desc}, {temp}°C다냥 ☀️ (체감 {feels}°C, 습도 {humidity}%)\n오늘 {low}~{high}°C, 비 올 확률 {rain}"
       weather.day: "{day} {place} 날씨는 {desc}, {low}~{high}°C다냥 (비 올 확률 {rain})"
-      weather.rain: "{day} {place} 비 올 확률은 {rain}이다냥 ☔ ({desc}, {low}~{high}°C)"
+      weather.rain: "{day} {place} 비 올 확률은 {rain}다냥 ☔ ({desc}, {low}~{high}°C)"
       weather.week: "{place} 이번 주 날씨다냥 📅\n{items}"
       weather.week_item: "  {day} {desc} {low}~{high}°C, 비 {rain}"
       weather.tip_umbrella: "우산 챙겨라냥 ☂️"
