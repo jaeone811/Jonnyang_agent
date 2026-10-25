@@ -371,3 +371,8 @@ dev = ["pytest", "ruff"]
 - 그림 파일이 없거나 `sprites.enabled: false`면 기존 도형 고양이(`painter.py`). exe 옆에 `sprites/` 폴더를 두면 그 그림을 쓴다.
 - 펫 영역 170x150 → 190x170. 트레이·exe 아이콘도 정면 자세 얼굴.
 - 확인: 테스트 567 통과(그림 표정 전부·프레임 수·대체 경로·끌기 자세 추가), 로컬 PyInstaller 빌드 `--selftest`에서 sprites 19개 로드 PASS.
+
+## 다운로드가 "위험"으로 막힘 (2026-10-25)
+- 원인: 코드 서명이 없는 PyInstaller exe라서 브라우저 평판 검사(Edge SmartScreen, Chrome 세이프 브라우징)나 Defender ML 탐지(…!ml)에 걸린다.
+- 조치: CI에서 PyInstaller 부트로더를 소스에서 직접 컴파일(`PYINSTALLER_COMPILE_BOOTLOADER=1`, `--no-binary=PyInstaller`, PyInstaller 문서 bootloader-building), exe에 버전 정보(제품 이름·버전·설명) 추가. README에 브라우저별 푸는 방법과 Python으로 실행하는 대안.
+- 근본 해결은 코드 서명 인증서(유료)뿐. 사용자 결정 필요.

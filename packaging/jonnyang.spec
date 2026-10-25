@@ -47,6 +47,30 @@ a.datas = [e for e in a.datas if _keep(e)]
 pyz = PYZ(a.pure)
 
 icon = ROOT / "build" / "jonnyang.ico"
+
+
+def _version_info():
+    """exe 속성의 '자세히' 탭 정보(제품 이름·버전·설명). 이게 없는 서명 안 된 exe는 백신이 더 의심한다."""
+    if sys.platform != "win32":
+        return None
+    from PyInstaller.utils.win32.versioninfo import (FixedFileInfo, StringFileInfo, StringStruct, StringTable,
+                                                     VarFileInfo, VarStruct, VSVersionInfo)
+    ver = next(line.split('"')[1] for line in (ROOT / "src" / "jonnyang" / "__init__.py").read_text(
+        encoding="utf-8").splitlines() if line.startswith("__version__"))
+    nums = tuple(int(x) for x in (ver.split(".") + ["0"] * 4)[:4])
+    strings = [StringStruct("CompanyName", "Jonnyang"),
+               StringStruct("FileDescription", "Jonnyang desktop pet assistant"),
+               StringStruct("FileVersion", ver),
+               StringStruct("InternalName", "Jonnyang"),
+               StringStruct("LegalCopyright", "Jonnyang project"),
+               StringStruct("OriginalFilename", "Jonnyang.exe"),
+               StringStruct("ProductName", "Jonnyang"),
+               StringStruct("ProductVersion", ver)]
+    return VSVersionInfo(ffi=FixedFileInfo(filevers=nums, prodvers=nums),
+                         kids=[StringFileInfo([StringTable("041204B0", strings)]),
+                               VarFileInfo([VarStruct("Translation", [0x0412, 1200])])])
+
+
 exe = EXE(
     pyz,
     a.scripts,
@@ -55,6 +79,7 @@ exe = EXE(
     name="Jonnyang",
     console=False,               # 펫만 뜨고 검은 콘솔 창은 안 뜬다
     icon=str(icon) if icon.exists() else None,
+    version=_version_info(),
     upx=False,
 )
 coll = COLLECT(exe, a.binaries, a.datas, name="Jonnyang", upx=False)

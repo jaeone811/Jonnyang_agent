@@ -44,7 +44,13 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install
-        run: python -m pip install -e . pyinstaller==6.22.3 pillow
+        run: python -m pip install -e . pillow
+      # PyInstaller 부트로더(exe 맨 앞 실행 부분)를 직접 컴파일한다. 기본 부트로더는 악성 프로그램도 많이 써서
+      # 백신·브라우저가 PyInstaller exe를 통째로 의심하는 경우가 있다 (PyInstaller 문서 bootloader-building).
+      - name: PyInstaller (bootloader built from source)
+        env:
+          PYINSTALLER_COMPILE_BOOTLOADER: "1"
+        run: python -m pip install --verbose --no-cache-dir --no-binary=PyInstaller pyinstaller==6.22.3
       - name: Icon
         env:
           QT_QPA_PLATFORM: offscreen
